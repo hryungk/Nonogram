@@ -8,20 +8,20 @@
  */
 import java.util.Arrays;
 import java.util.ArrayList;
-public class NonogramSolution_v1_2 
+public class NonogramSolution_v2_0 
 {   
     private final int[][] PROB_ROW;     // Row arrays of the problem
     private final int[][] PROB_COL;     // Column arrays of the problem   
     private final Status[][] SOLUTION;  // Solution to the problem
-    private Status[][] answer;          // Answer that this solver produces
+    private Status[][] myAnswer;          // Answer that this solver produces
     private final int m, n;             // size of row and column, respectively
-    private ArrayInfo[] row_arrays;     // An array of array information objects for row arrays
-    private ArrayInfo[] col_arrays;     // An array of array information objects for column arrays
+    private final ArrayInfo[] row_arrays;     // An array of array information objects for row arrays
+    private final ArrayInfo[] col_arrays;     // An array of array information objects for column arrays
     
     /** Initializes parameters by loading a new problem.
      * @param newProblem A Nonogram problem to solve
      */
-    public NonogramSolution_v1_2(NonogramProblem newProblem)
+    public NonogramSolution_v2_0(NonogramProblem newProblem)
     {        
         // Load problem definition from newProblem
         PROB_ROW = newProblem.getRowArray();
@@ -39,10 +39,10 @@ public class NonogramSolution_v1_2
             col_arrays[j] = new ArrayInfo(PROB_COL[j], n);
         
         
-        answer = new Status[m][n];
+        myAnswer = new Status[m][n];
         for (int i = 0; i < m; i++) // Initialize answer as Empty
             for (int j = 0; j < n; j++)
-                answer[i][j] = Status.Empty;        
+                myAnswer[i][j] = Status.Empty;        
     } // end constructor    
     
     /** Solves the given problem.
@@ -67,8 +67,8 @@ public class NonogramSolution_v1_2
                 {
                     System.out.println("Array " + Arrays.toString(PROB_ROW[i]) +
                             " -> " + Arrays.toString(row_arrays[i].getArray()) + ":");
-                    Status[] temp = findArraySolution(RowCol.Row,i, m);
-                    System.arraycopy(temp, 0, answer[i], 0, n); 
+                    Status[] temp = findArraySolution(RowCol.Row,i, m, myAnswer, row_arrays[i]);
+                    System.arraycopy(temp, 0, myAnswer[i], 0, n); 
                     //for (int j = 0; j < n; j++)
                     //    answer[i][j] = temp[j]; 
                 }
@@ -85,11 +85,11 @@ public class NonogramSolution_v1_2
                 {
                     System.out.println("Array " + Arrays.toString(PROB_COL[j]) +
                             "->" + Arrays.toString(col_arrays[j].getArray()) + ":");
-                    Status[] temp = findArraySolution(RowCol.Column, j, n);
+                    Status[] temp = findArraySolution(RowCol.Column, j, n, myAnswer, col_arrays[j]);
                     for (int i = 0; i < n; i++)
                     {
-                        answer[i][j] = temp[i]; 
-                        noEmpty = noEmpty && (answer[i][j] != Status.Empty);
+                        myAnswer[i][j] = temp[i]; 
+                        noEmpty = noEmpty && (myAnswer[i][j] != Status.Empty);
                     } // end for
                 }
                 else                                    
@@ -109,18 +109,19 @@ public class NonogramSolution_v1_2
         boolean result = true;
         for (int i = 0; i < m; i ++)
             for (int j = 0; j < n; j++)
-                result = result && (answer[i][j] == SOLUTION[i][j]);
+                result = result && (myAnswer[i][j] == SOLUTION[i][j]);
         return result;
     } // end isCorrect
     
     /** Construct a string that shows the answer that this solver produces.
      * @return A String containing the answer to the problem.
      */
+    @Override
     public String toString()
     {
         String result = "Answer to " + m + " x " + n + " Nonogram Puzzle:\n";
         for (int i = 0; i < m; i++)            
-            result += printCells(answer[i]) + "\n";                    
+            result += printCells(myAnswer[i]) + "\n";                    
         return result;
     } // end toString   
     
@@ -128,30 +129,26 @@ public class NonogramSolution_v1_2
      * @param rowcol  Indicator whether a row or a column is being investigated
      * @param idx The index of row/column in the 2D array
      * @param k The length of the row or column
+     * @param answer A 2D array of status of each cell of the grid. 
+     * @param curArrayInfo  An ArrayInfo object containing current information of the row/col array.
      * @return The updated status of the given array
      */
-    public Status[] findArraySolution(RowCol rowcol, int idx, int k)
-    {   
-        ArrayInfo curArrayInfo;                       
+    public Status[] findArraySolution(RowCol rowcol, int idx, int k, Status[][] answer, ArrayInfo curArrayInfo)
+    {           
         Status[] arrayAnswer = new Status[k];    // The answer for the curArray          
-        if (rowcol == RowCol.Row)           // When inspecting a row
-        {
-            curArrayInfo = row_arrays[idx];
-            arrayAnswer = answer[idx];            
-        }
-        else // (rowcol == RowCol.Column)   // When inspecting a column
-        {
-            curArrayInfo = col_arrays[idx];            
+        if (rowcol == RowCol.Row)           // When inspecting a row                    
+            arrayAnswer = answer[idx];                    
+        else // (rowcol == RowCol.Column)   // When inspecting a column                    
             for (int i = 0; i < k; i++)
                 arrayAnswer[i] = answer[i][idx];
-        }        
+                
         int b = curArrayInfo.getBeg();  // effective beginning index
         int e = curArrayInfo.getEnd();  // effective end index
         // Push beginning and end index inward if there are consecutive Falses.
         int[] be = updateEnds(b, e,curArrayInfo, arrayAnswer);            
         b = be[0]; 
         e = be[1];
-        int[] oldbe = be;
+        int[] oldbe;// = be;
         
         int[] curArray = curArrayInfo.getArray(); // Row/column array        
         int a = curArrayInfo.getNum();            // The number of numbers in curArray
@@ -631,7 +628,20 @@ public class NonogramSolution_v1_2
         if (!Arrays.equals(oldbe, be))    // If anything is updated, print out the array.
             System.out.println("\tUpdating Ends:\n\tb = " + b + ", e = " + e + ", ke = " + ke);        
         // Update solved arrays
-        curArrayInfo.setSolved(solved);           
+        curArrayInfo.setSolved(solved);     
+        
+        if (rowcol == RowCol.Row)           // When inspecting a row
+        {
+            myAnswer[idx] = arrayAnswer;
+            row_arrays[idx] = curArrayInfo;
+        }
+        else // (rowcol == RowCol.Column)   // When inspecting a column                    
+        {
+            for (int i = 0; i < k; i++)
+                myAnswer[i][idx] = arrayAnswer[i];
+            col_arrays[idx] = curArrayInfo;
+        } // end if
+        myAnswer = answer;
         return arrayAnswer;
     } // end findArraySolution
     
@@ -1145,7 +1155,7 @@ public class NonogramSolution_v1_2
         for (int i = 0; i < trueClusterLen.length; i++)
             foundLaterTrue = foundLaterTrue || (begIdxTrue[i] > q);                        
         // Find an empty cluster whose length is smaller than x and in the next section.
-        boolean foundLaterSmallerEmpty = false;
+        boolean foundLaterSmallerEmpty;// = false;
         for (int i = 0; i < emptyClusterLen.length; i++)
         {
             int curBegIdxEmpty = begIdxEmpty[i];
