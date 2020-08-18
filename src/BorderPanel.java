@@ -30,10 +30,10 @@ public class BorderPanel extends JPanel
     // Sets up this panel with a button in each area of a border
     // layout to show how it affects their position, shape, and size.
     //----------------------------------------------------------------------------
-    public BorderPanel(int probNum) throws IOException
+    public BorderPanel(int rowNum, int colNum, int probNum) throws IOException
     {   
         // Parameters for the problem
-        newProblem = new NonogramProblem(probNum);        
+        newProblem = new NonogramProblem(rowNum, colNum, probNum);        
         newSolution = new NonogramSolution_v2_0(newProblem);
         // Load problem definition from newProblem
         PROB_ROW = newProblem.getRowArray();
@@ -92,7 +92,10 @@ public class BorderPanel extends JPanel
         public void actionPerformed(ActionEvent event)
         {
             if (noEmpty)
+            {
                 timer.stop();
+                System.out.println("Is the answer to the puzzle correct?: " + newSolution.isCorrect());
+            }
             else // if (!noEmpty)    // Keep solving arrays until there is no empty cell
             {                 
                 System.out.println("==============================================" +

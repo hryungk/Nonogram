@@ -8,85 +8,35 @@
 import java.io.*;
 import java.util.Scanner;
 import java.util.Arrays;
-import java.util.Properties;
 public class NonogramProblem 
 {    
     private int r; // Number of rows
     private int c; // Number of columns
     
     // A given problem         
-    private int[][] rowArrays;// = new int[r][];
-    private int[][] columnArrays;// = new int[c][];
+    private int[][] rowArrays;
+    private int[][] columnArrays;
     
-    private Status[][] solution;// = new Status[r][c];   // Answer of this problem
+    private Status[][] solution;  // Answer of this problem
     
     public NonogramProblem() throws IOException
     {
-        this(2);
+        this(1);
       
     } // end default constructor
     
     public NonogramProblem(int probNum) throws IOException
     {
-        readProblem(probNum);
-        isValid();        
+        this(10, 10, probNum);        
     } // end  constructor
     
-    private void readProblem(int probNum) throws IOException
+    public NonogramProblem(int rowNum, int colNum, int probNum) throws IOException
     {
-        String firstLine, secondLine, thirdLine;
-        Scanner fileScan; 
-        //InputStream input = new FileInputStream("/Users/HRK/NetBeansProjects/Project Nonogram/Problem" + probNum + ".txt");
-        File input = new File("Problem" + probNum + ".txt");
-        fileScan = new Scanner(input); // Read problem file
-        fileScan.useDelimiter("}");
-        
-        // Scan the row arrays
-        firstLine = fileScan.nextLine();    // Row arrays scanner
-        rowArrays = arrayScanner(firstLine);
-        r = rowArrays.length;
-        System.out.print("Row arrays: ");   // Print out the row arrays
-        for (int[] array : rowArrays)        
-            System.out.print(Arrays.toString(array) + " ");        
-        System.out.println();
-        
-        // Scan the column arrays
-        secondLine = fileScan.nextLine();    // Column arrays scanner
-        columnArrays = arrayScanner(secondLine);
-        c = columnArrays.length;
-        System.out.print("Column arrays: ");    // Print out the column arrays
-        for (int[] array : columnArrays)        
-            System.out.print(Arrays.toString(array) + " ");        
-        System.out.println();
-        
-        // Scan the solution
-        thirdLine = fileScan.next();    // Row arrays scanner
-        thirdLine = thirdLine.substring(1);
-        //System.out.println(thirdLine);
-        solution = answerScanner(thirdLine, r, c);
-        System.out.println("Solution:");    // Print out the solution
-        for (int i = 0; i < r; i++)
-        {
-            for (int j = 0; j < c; j++)
-            {
-                String result;
-                switch(solution[i][j])
-                {
-                    case True:
-                        result = "T";
-                        break;
-                    case False:
-                        result = "F";
-                        break;
-                    default:
-                        result = "";
-                        break;
-                }
-                System.out.print(result + " ");
-            }
-            System.out.println();
-        }        
-    } // end readProblem
+        r = rowNum;
+        c = colNum;
+        readProblem(probNum);
+        isValid();        
+    } // end  constructor    
     
     // Return an array of row arrays.
     public int[][] getRowArray()
@@ -106,6 +56,49 @@ public class NonogramProblem
         return solution;
     } // end getAnswer
     
+    @Override
+    public String toString()
+    {
+        String result = "";
+        
+        result += "Row arrays: ";   // Print out the row arrays
+        for (int[] array : rowArrays)        
+            result += Arrays.toString(array) + " ";
+        result += "\n";        
+                  
+        result += "Column arrays: ";    // Print out the column arrays
+        for (int[] array : columnArrays)        
+            result += Arrays.toString(array) + " ";
+        result += "\n";        
+        
+        result += solutionToString();
+        return result;
+    }
+    
+    
+    private void readProblem(int probNum) throws IOException
+    {
+        String firstLine, secondLine, thirdLine;
+        Scanner fileScan; 
+        File input = new File("Problem_" + r + "x" + c + "_" + probNum + ".txt");
+        fileScan = new Scanner(input); // Read problem file
+        fileScan.useDelimiter("}");
+        
+        // Scan the row arrays
+        firstLine = fileScan.nextLine();    // Row arrays scanner
+        rowArrays = arrayScanner(firstLine);
+        r = rowArrays.length;        
+        
+        // Scan the column arrays
+        secondLine = fileScan.nextLine();    // Column arrays scanner
+        columnArrays = arrayScanner(secondLine);
+        c = columnArrays.length;
+                
+        // Scan the solution
+        thirdLine = fileScan.next();    // Row arrays scanner
+        thirdLine = thirdLine.substring(1);
+        solution = answerScanner(thirdLine, r, c);        
+    } // end readProblem
     
     // Scan the array of row/column arrays and return it.
     private int[][] arrayScanner(String currentLine)
@@ -192,8 +185,8 @@ public class NonogramProblem
         return solutionGrid;
     } // end answerScanner    
     
-    /* Check whether the assertions for this problem are correct.
-      Might throw an assertion error and program execution terminates. */
+    // Check whether the assertions for this problem are correct.
+    //  Might throw an assertion error and program execution terminates.
     private void isValid()
     {
         int[] curArray;
@@ -210,6 +203,34 @@ public class NonogramProblem
                 sum += curArray[ai];
             } // end for                           
             assert sum + (a - 1) <= r;
-        }
+        } // end for
     } // end isValid
+    
+    private String solutionToString()
+    {
+        String result = "";
+        result += "Solution:\n";    // Print out the solution
+        for (int i = 0; i < r; i++)
+        {
+            for (int j = 0; j < c; j++)
+            {                
+                switch(solution[i][j])
+                {
+                    case True:
+                        result += "T";
+                        break;
+                    case False:
+                        result += "F";
+                        break;
+                    default:
+                        result += "";
+                        break;
+                } // end switch
+                result += " ";
+            } // end for
+            result += "\n";
+        } // end for
+        result += "\n";
+        return result;
+    } // end solutionToString    
 }

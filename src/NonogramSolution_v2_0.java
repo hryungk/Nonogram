@@ -330,7 +330,7 @@ public class NonogramSolution_v2_0
                     // When the section ended where there are still numbers in the array to be investigated,
                     // use the previous p and q.
                     // Otherwise, use a new pair of p and q.
-                    if (!(a > 1 && s <= a - 1 && q == e + 1))
+                    if (!(a > 1 && s > 0 && q == e + 1))
                     {
                         // Determine current section (p, q), exclusive.  
                         // First determine sections based on true/false cells in the current row/column.
@@ -410,8 +410,13 @@ public class NonogramSolution_v2_0
 
                         // Find an empty cluster whose length is greather than or equal to x and in a previous section.
                         boolean foundEarlierLargerEmpty = false;
+                        int earlierLargerEmptyLen = 0;
                         for (int i = 0; i < numEmptyClusters; i++)
+                        {
                             foundEarlierLargerEmpty = foundEarlierLargerEmpty || (begIdxEmpty[i] < p && emptyClusterLen[i] >= x);
+                            if (foundEarlierLargerEmpty)
+                                earlierLargerEmptyLen = Math.max(earlierLargerEmptyLen,emptyClusterLen[i]); // In case there are multiple numbers meeting the requirement, choose bigger number.
+                        }
 
                         // Find an empty cluster whose length is the same as x and in the current section.
                         // Or empty cluster + true cluster == x
@@ -440,7 +445,7 @@ public class NonogramSolution_v2_0
                             int curBegIdxEmpty = begIdxEmpty[i];
                             int curEmptyClusterLen = emptyClusterLen[i];
                             foundLaterLargerEmpty = foundLaterLargerEmpty || (curBegIdxEmpty > q && curEmptyClusterLen >= x);
-                            if (foundLaterLargerEmpty)
+                            if (foundLaterLargerEmpty && curEmptyClusterLen >= x)
                                 laterLargerEmptyLen = curEmptyClusterLen;
                             // Check whether there is a true cluster coming before the empty cluster whose longer than x
                             // (because then x doesn't belong to this empty cluster. e.g., _ _ _ X X O O O _ _ and current number is 2)
@@ -449,29 +454,46 @@ public class NonogramSolution_v2_0
                             int thisLenTrue = thisTrue[1];    // Length of True cluster
                             if (thisLocTrue != -1)  // there exist true cluster between q and current empty cluster
                                 foundLaterLargerEmpty = foundLaterLargerEmpty && (thisLenTrue <= x);
-                        } // end for                                       
+                        } // end for  
+                        
+                        // Check whether empty clusters are adjacent to true clusters.
+                        // In this case, it is not a true empty cluster, rather a potential true cluster.
+                        boolean emptyBetweenO = false;
+                        for (int i = 0; i < numEmptyClusters; i++)
+                        {
+                            int curBegIdxEmpty = begIdxEmpty[i];
+                            int curEmptyClusterLen = emptyClusterLen[i];
+                            if (curBegIdxEmpty > 0)
+                                emptyBetweenO = emptyBetweenO || (arrayAnswer[curBegIdxEmpty-1] == Status.True);
+                            if (curBegIdxEmpty+curEmptyClusterLen < k)
+                                emptyBetweenO = emptyBetweenO || (arrayAnswer[curBegIdxEmpty+curEmptyClusterLen] == Status.True);
+                        } // end for
 
                         int i0 =  p + 1 + kp - x;   // Beginning index of true cells 
                         int sumFromX = 0;   // Summation of numbers + 1 space from x to the end in the array
                         for (int i = s; i < a; i++)
                             sumFromX += curArray[i] + 1;
                         sumFromX -= 1;  // last number doesn't need one space
+                        int sumToX = 0; // Summation of numbers + 1 space from first number to x
+                        for (int i = 0; i <= s; i++)
+                            sumToX += curArray[i] + 1;
+                        sumToX -= 1;
                         /* Fill up the middle (2x-k') cells. */
                         // When there are more than one number left in the array but it is alreay filled in the middle of the row/column, 
                         // (so that the code still doesn't know it is filled), and there are multiple locations for the last number to be,
                         // we should skip this. Example is _XXOXX_XOO and array is [1,1,2]                                                                   
-                        // [3] _ _ _ _ _ _ X _ _ _ --> Don't fill, [1, 1, 3] _ _ _ X _ X _ _ _ X --> _ _ _ X _ X O O O X
+                        // [1, 1, 3] _ _ _ X _ X _ _ _ X --> _ _ _ X _ X O O O X
                         // [2, 2] _ _ X X X X _ _ _ _ --> O O X X X X _ _ _ _
                         // [1, 2, 1] O X _ _ _ X _ _ _ _ --> Don't fill
-                        // [1, 2, 1] _ _ _ X _ _ X _ _ _ --> _ _ _ X O O X _ _ _
-                        // [1, 2, 1] _ _ _ _ X X O O X _ --> _ _ _ _ X X O O X O
+                        // [1, 1, 2] _ _ X O X _ _ O _ X --> Don't fill                                                
                         // [1, 1, 2] _ X O X X X _ O _ X --> O X O X X X _ O _ X (should be fixed P6, modify with foundLaterSameTrue)    
                         if (!solved && (x > kp/2) && (kp >= x) && (i0 >= b) &&
                             (!((sum - numT == x && a >= 2) || (kp < numE && a == 1) || foundLaterSameTrue ||
-                            (numEmptyClusters == a && emptyClusterLen[s] == x && numT==x) ||
-                            (numEmptyClusters != a && q == e+1 && foundThisSameEmpty && foundEarlierLargerEmpty)) ||
-                            (numEmptyClusters == a && a >= 2 && sumFromX > laterLargerEmptyLen) ||
-                            (a > 1 && s == a - 1 && foundEarlierLargerTrue && foundThisSameEmpty)))// ||
+                            (numEmptyClusters == a && emptyClusterLen[s] == x && numT==x) ||    // [1,1,2] _XXOXX_XOO
+                            foundEarlierLargerEmpty || foundLaterLargerEmpty) || // [3] _ _ _ _ _ _ X _ _ _
+                            (numEmptyClusters == a && a >= 2 && sumFromX > laterLargerEmptyLen && !emptyBetweenO && sumToX > earlierLargerEmptyLen) ||// [1,2,1] _ _ _ X _ _ X _ _ _ --> _ _ _ X O O X _ _ _
+                            (a > 1 && s == a - 1 && foundEarlierLargerTrue && foundThisSameEmpty) ||// [1,2,1] _ _ _ _ X X O O X _ --> _ _ _ _ X X O O X O
+                            (numEmptyClusters == a && q == e+1 && foundThisSameEmpty && foundEarlierLargerEmpty && sumToX > earlierLargerEmptyLen)))// [1, 1, 3] _ _ _ X _ X _ _ _ X --> _ _ _ X _ X O O O X
                             //(foundLaterSameTrue && foundThisSameEmpty && laterLargerEmptyLen <= x)))
                         {
                             // When there is a true cluster whose length is the same as x and not in the current section, don't fill up.
@@ -529,9 +551,10 @@ public class NonogramSolution_v2_0
                         // e.g., [1, 2] X _ _ _ _ X O _ _ _ 
                         // e.g., [2, 1] X _ _ _ _ X O _ _ _ 
                         // e.g., [1, 1, 2] _ _ _ O _ X O _ _ X 
+                        // [2, 1] _ _ _ X O _ _ _ X X --> Don't fill
                         if (!solved && (p == -1 || arrayAnswer[p] == Status.False) 
                             && arrayAnswer[p+1] == Status.True && (x != lenCurTrue)
-                            && p != q) 
+                            && p != q && sum + (a-1) > kp) 
                         {
                             System.out.println("\tp is false and p+1 is true");
                             for (int i = p+1; i <= p+x; i++)  // Fill up from left
@@ -552,9 +575,10 @@ public class NonogramSolution_v2_0
                         // e.g., [1, 2] X _ _ _ _ X _ _ _ O
                         // e.g., [2, 1] X _ _ _ _ X _ _ _ O
                         // [1, 1, 2] _ _ X O X X O _ X X when p = q = 5, x = 1 (second)
+                        // [2, 1]_ _ _ O X _ _ _ X X --> Don't fill
                         else if (!solved && (q == k || arrayAnswer[q] == Status.False) 
                                 && arrayAnswer[q-1] == Status.True && (x != lenCurTrue)
-                                && p != q)
+                                && p != q && sum + (a-1) > kp)
                         {
                             System.out.println("\tq is false and q-1 is true");
                             for (int i = q-1; i >= q-x; i--)  // Fill up from right

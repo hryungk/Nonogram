@@ -18,9 +18,11 @@ public class NonogramLayout
         JFrame frame = new JFrame("Nonogram Demo");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         
-        int probNum = 10;        
-        System.out.println("<Problem " + probNum + ">");
-        BorderPanel panel = new BorderPanel(probNum);
+        int probNum = 11;
+        int rowNum = 10;
+        int colNum = 10;
+        System.out.println("<Problem " + rowNum + " x " + colNum + " - " + probNum + ">");
+        BorderPanel panel = new BorderPanel(rowNum, colNum, probNum);
 
         frame.getContentPane().add(panel);
         frame.pack();
