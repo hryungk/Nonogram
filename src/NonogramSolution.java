@@ -15,7 +15,6 @@ public class NonogramSolution
     private final Status[][] SOLUTION;  // Solution to the problem
     private Status[][] answer;          // Answer that this solver produces
     private final int m, n;             // size of row and column, respectively
-//    private enum RowCol {Row, Column}   // State whether row or column    
     private ArrayInfo[] row_arrays;     // An array of array information objects for row arrays
     private ArrayInfo[] col_arrays;     // An array of array information objects for column arrays
     
@@ -215,33 +214,29 @@ public class NonogramSolution
         }
         else
         {   
-            /*  When the sum is one short in the beginning, fill up in between cells. */
-            // Only for the first time            
-            if (sum + (a - 1) == ke - 1 && arrayAnswer[b+1] == Status.Empty)    
-            {
-                System.out.println("\tsum of numbers and spaces == one short of effective row/column length");
-                fillUpWhenOneShort(curArrayInfo, arrayAnswer);
-                //System.out.println("\t" + printCells(arrayAnswer));
-            } // end if
-            
             /*  Check the first and the last cell */    
             oldbe = be;
             be = removeEnds(curArrayInfo, arrayAnswer);
             b = be[0];
             e = be[1];
-            solved = checkAllTrue(curArrayInfo, arrayAnswer, solved);            
+            solved = checkAllTrue(curArrayInfo, arrayAnswer, solved);    
             
             // Update parameters
             curArray = curArrayInfo.getArray(); // Row/column array        
             a = curArrayInfo.getNum();          // The number of numbers in curArray
-            ke = curArrayInfo.getLength();      // Effective length of grid
-            sum = curArrayInfo.getSum();        // sum of numbers in curArray            
-            numT = numOfStatus(b, e, arrayAnswer, Status.True);  // The number of True cells    
-            numE = numOfStatus(b, e, arrayAnswer, Status.Empty); // The number of Empty cells                         
+            ke = curArrayInfo.getLength();      // Effective length of grid                            
             if (!Arrays.equals(oldbe, be))    // If anything is updated, print out the array.
                 System.out.println("\tAfter removing ends:\n\tb = " + b + ", e = " + e + ", ke = " + ke + ", a = " + a);
             
-            if (a == 1) // When there is only one number in the array
+            /*  Fill up by general rules. */                
+            if (!solved)
+            {
+                fillUp(curArrayInfo, arrayAnswer);
+                solved = checkAllTrue(curArrayInfo, arrayAnswer, solved);    
+            } // end if
+            
+            /* When there is only one number in the array */
+            if (a == 1 && !solved) 
             {
                 System.out.println("\tThere is only one number in the array.");
                 // Fill up between the first and the last true
@@ -256,6 +251,29 @@ public class NonogramSolution
                     System.out.println("\t" + printCells(arrayAnswer)); 
                 } // end if
                 
+                // Make small empty clusters false. 
+                // Find Empty cell clusters [b, e], inclusive.
+                int[][] emptyArrays = findStatusClusters(arrayAnswer, curArrayInfo, Status.Empty);
+                int[] begIdxEmpty = emptyArrays[0];
+                int[] emptyClusterLen = emptyArrays[1];
+                for (int i = 0; i < emptyClusterLen.length; i++)
+                {
+                    int curBegIdxEmpty = begIdxEmpty[i];
+                    int curEmptyClusterLen = emptyClusterLen[i];
+                    boolean isBetweenFalses  = 
+                    ((curBegIdxEmpty - 1 == -1) || (arrayAnswer[curBegIdxEmpty - 1] == Status.False)) &&
+                    ((curBegIdxEmpty + curEmptyClusterLen == k) || (arrayAnswer[curBegIdxEmpty + curEmptyClusterLen] == Status.False));
+                    
+                    if (curEmptyClusterLen < curArray[0] && isBetweenFalses) 
+                    {
+                        System.out.println("\t\tMake smaller empty clusters false");
+                        for (int ii = curBegIdxEmpty; ii < curBegIdxEmpty + curEmptyClusterLen; ii++)
+                            if (arrayAnswer[ii] == Status.Empty)
+                                arrayAnswer[ii] = Status.False;     
+                        System.out.println("\t" + printCells(arrayAnswer)); 
+                    } // end if                            
+                } // end for 
+                
                 /* Check whether this array is solved. */
                 solved = checkAllTrue(curArrayInfo, arrayAnswer, solved);
             } // end if
@@ -263,21 +281,47 @@ public class NonogramSolution
             /* When there is a true cluster close to the front/end, fill up to possible cell.
                e. g., [3, 3] _ O _ _ _ _ _ _ _ --> _ O O _ _ _ _ _ _
                e. g., [3, 3] _ _ _ _ _ _ _ O _ --> _ _ _ _ _ _ O O _ */
-            fillUpEnd(curArrayInfo, arrayAnswer);
-            /* Check whether this array is solved. */
-            solved = checkAllTrue(curArrayInfo, arrayAnswer, solved);
+            if (!solved)
+            {
+                fillUpEnd(curArrayInfo, arrayAnswer);
+                /* Check whether this array is solved. */
+                solved = checkAllTrue(curArrayInfo, arrayAnswer, solved);
+            } // end if
             
             /* When there is a true cluster just away from the front/end, make first few false.
                e. g., [3, 4] _ _ _ O O _ _ _ _ --> X X _ O O _ _ _ _ _
                e. g., [4, 3] _ _ _ _ _ O _ _ _ --> _ _ _ _ _ O _ _ X */
-            falseEnd(curArrayInfo, arrayAnswer);
-            /* Check whether this array is solved. */
-            solved = checkAllTrue(curArrayInfo, arrayAnswer, solved);
+            if (!solved)
+            {
+                falseEnd(curArrayInfo, arrayAnswer);
+                /* Check whether this array is solved. */
+                solved = checkAllTrue(curArrayInfo, arrayAnswer, solved);
+            } // end if
+            
+            if (!solved)
+            {
+                /*  Check the first and the last cell */    
+                oldbe = be;
+                be = removeEnds(curArrayInfo, arrayAnswer);
+                b = be[0];
+                e = be[1];
+                solved = checkAllTrue(curArrayInfo, arrayAnswer, solved); 
+            } // end if
             
             /* Investigate by sections according to the numbers in the array. */
             if (!solved)
             {
-                int p = -1;          // The last cell index in the previous false cluster
+                // Update parameters
+                curArray = curArrayInfo.getArray(); // Row/column array        
+                a = curArrayInfo.getNum();          // The number of numbers in curArray
+                ke = curArrayInfo.getLength();      // Effective length of grid
+                sum = curArrayInfo.getSum();        // sum of numbers in curArray            
+                numT = numOfStatus(b, e, arrayAnswer, Status.True);  // The number of True cells    
+                numE = numOfStatus(b, e, arrayAnswer, Status.Empty); // The number of Empty cells                         
+                if (!Arrays.equals(oldbe, be))    // If anything is updated, print out the array.
+                    System.out.println("\tAfter removing ends:\n\tb = " + b + ", e = " + e + ", ke = " + ke + ", a = " + a);
+                
+                int p = -1;      // The last cell index in the previous false cluster
                 int q = b-1;     // The first cell index in the next false cluster
                 int s = 0;
                 while (s < a && !solved) // loop through numbers in the array (sections)
@@ -292,19 +336,18 @@ public class NonogramSolution
                     if (!(a > 1 && s <= a - 1 && q == e + 1))
                     {
                         // Determine current section (p, q), exclusive.  
-                        int[] pq = getpq(arrayAnswer,curArrayInfo,s,q);
+                        // First determine sections based on true/false cells in the current row/column.
+                        int[] pq = getpq_conditional(arrayAnswer,curArrayInfo,s,q);
                         p = pq[0];
                         q = pq[1];
-                        if (sum + (a - 1) == ke - 1)    // when one short
-                        {
-                            int[][] pqList = getpqOneShort(curArrayInfo);
-                            int pOneShort = pqList[0][s];
-                            int qOneShort = pqList[1][s];
-
-                            p = Math.max(p, pOneShort);
-                            q = Math.min(q, qOneShort);                        
-
-                        } // end if                        
+                        // Find p and q with the general sectioning method.
+                        pq = getpq(curArrayInfo, s);
+                        int pGeneral = pq[0];
+                        int qGeneral = pq[1];
+                        // Determine p and q value by choosing the smallest window
+                        p = Math.max(p, pGeneral);
+                        q = Math.min(q, qGeneral);                        
+                        
                     } // end if
                     int kp = q - p - 1; // The number of empty cells between p and q   
                     System.out.println("\tp = " + p + ", q = " + q + ", k' = " + kp);
@@ -317,6 +360,7 @@ public class NonogramSolution
                         int[][] trueArrays = findStatusClusters(arrayAnswer, curArrayInfo, Status.True);
                         int[] begIdxTrue = trueArrays[0];
                         int[] trueClusterLen = trueArrays[1];
+                        int numTrueClusters = begIdxTrue.length;
 
                         // Find Empty cell clusters [b, e], inclusive.
                         int[][] emptyArrays = findStatusClusters(arrayAnswer, curArrayInfo, Status.Empty);
@@ -356,7 +400,7 @@ public class NonogramSolution
                             e = be[1];
                             curArray = curArrayInfo.getArray(); // Row/column array        
                             a = curArrayInfo.getNum();          // The number of numbers in curArray
-                            ke = curArrayInfo.getLength();      // Effective length of grid
+                            //ke = curArrayInfo.getLength();      // Effective length of grid
                             sum = curArrayInfo.getSum();        // sum of numbers in curArray            
                             numT = numOfStatus(b, e, arrayAnswer, Status.True);  // The number of True cells    
                             numE = numOfStatus(b, e, arrayAnswer, Status.Empty); // The number of Empty cells  
@@ -364,7 +408,7 @@ public class NonogramSolution
                         
                         // Find a true cluster whose length is the same as x and in a later section.
                         boolean foundLaterSameTrue = false;
-                        for (int i = 0; i < trueClusterLen.length; i++)
+                        for (int i = 0; i < numTrueClusters; i++)
                             foundLaterSameTrue = foundLaterSameTrue || (begIdxTrue[i] > q && trueClusterLen[i] == x);
 
                         // Find an empty cluster whose length is greather than or equal to x and in a previous section.
@@ -383,6 +427,11 @@ public class NonogramSolution
                             if (!foundThisSameEmpty)
                                 ie++;
                         } // end while
+                        
+                        // Find an empty cluster whose length is greather than or equal to x and in a previous section.
+                        boolean foundEarlierLargerTrue = false;
+                        for (int i = 0; i < numTrueClusters; i++)
+                            foundEarlierLargerTrue = foundEarlierLargerTrue || (begIdxTrue[i] < p && trueClusterLen[i] > x);
 
                         // Find an empty cluster whose length is greather than or equal to x and in a next section.
                         // Only if the empty cluster doesn't follow a true cluster whose length is larger than x
@@ -406,25 +455,27 @@ public class NonogramSolution
                         } // end for                                       
 
                         int i0 =  p + 1 + kp - x;   // Beginning index of true cells 
-                        int sumFromX = 0;   // Summation of numbers from x to the end in the array
+                        int sumFromX = 0;   // Summation of numbers + 1 space from x to the end in the array
                         for (int i = s; i < a; i++)
                             sumFromX += curArray[i] + 1;
                         sumFromX -= 1;  // last number doesn't need one space
                         /* Fill up the middle (2x-k') cells. */
                         // When there are more than one number left in the array but it is alreay filled in the middle of the row/column, 
                         // (so that the code still doesn't know it is filled), and there are multiple locations for the last number to be,
-                        // we should skip this. Example is _XXOXX_XOO and array is [1,1,2]
+                        // we should skip this. Example is _XXOXX_XOO and array is [1,1,2]                                                                   
+                        // [3] _ _ _ _ _ _ X _ _ _ --> Don't fill, [1, 1, 3] _ _ _ X _ X _ _ _ X --> _ _ _ X _ X O O O X
                         // [2, 2] _ _ X X X X _ _ _ _ --> O O X X X X _ _ _ _
-                        // [1, 2, 1] _ _ _ X _ _ X _ _ _ --> _ _ _ X O O X _ _ _
-                        // [1, 1, 2] _ X O X X X _ O _ X --> O X O X X X _ O _ X (should be fixed P6, modify with foundLaterSameTrue)
                         // [1, 2, 1] O X _ _ _ X _ _ _ _ --> Don't fill
-                        //  [3] _ _ _ _ _ _ X _ _ _ --> Don't fill, [1, 1, 3] _ _ _ X _ X _ _ _ X --> _ _ _ X _ X O O O X
+                        // [1, 2, 1] _ _ _ X _ _ X _ _ _ --> _ _ _ X O O X _ _ _
+                        // [1, 2, 1] _ _ _ _ X X O O X _ --> _ _ _ _ X X O O X O
+                        // [1, 1, 2] _ X O X X X _ O _ X --> O X O X X X _ O _ X (should be fixed P6, modify with foundLaterSameTrue)    
                         if (!solved && (x > kp/2) && (kp >= x) && (i0 >= b) &&
-                            !((sum - numT == x && a >= 2) || (kp < numE && a == 1) ||
-                            foundLaterSameTrue || //foundLaterLargerEmpty || //  || foundEarlierLargerEmpty
-                            (numEmptyClusters == a && a >= 2 && sumFromX <= laterLargerEmptyLen)|| //maxEmptyLen ) ||
+                            (!((sum - numT == x && a >= 2) || (kp < numE && a == 1) || foundLaterSameTrue ||
                             (numEmptyClusters == a && emptyClusterLen[s] == x && numT==x) ||
-                            (q == e+1 && foundThisSameEmpty && foundEarlierLargerEmpty && numEmptyClusters != a)))// && (s < a-1 && x != curArray[s+1]))
+                            (numEmptyClusters != a && q == e+1 && foundThisSameEmpty && foundEarlierLargerEmpty)) ||
+                            (numEmptyClusters == a && a >= 2 && sumFromX > laterLargerEmptyLen) ||
+                            (a > 1 && s == a - 1 && foundEarlierLargerTrue && foundThisSameEmpty)))// ||
+                            //(foundLaterSameTrue && foundThisSameEmpty && laterLargerEmptyLen <= x)))
                         {
                             // When there is a true cluster whose length is the same as x and not in the current section, don't fill up.
                             System.out.println("\tFill up middle (2x-k') cells");
@@ -481,7 +532,9 @@ public class NonogramSolution
                         // e.g., [1, 2] X _ _ _ _ X O _ _ _ 
                         // e.g., [2, 1] X _ _ _ _ X O _ _ _ 
                         // e.g., [1, 1, 2] _ _ _ O _ X O _ _ X 
-                        if (!solved && (p == -1 || arrayAnswer[p] == Status.False) && arrayAnswer[p+1] == Status.True && (x != lenCurTrue)) 
+                        if (!solved && (p == -1 || arrayAnswer[p] == Status.False) 
+                            && arrayAnswer[p+1] == Status.True && (x != lenCurTrue)
+                            && p != q) 
                         {
                             System.out.println("\tp is false and p+1 is true");
                             for (int i = p+1; i <= p+x; i++)  // Fill up from left
@@ -501,7 +554,10 @@ public class NonogramSolution
                         // e.g., [2, 2] X _ _ _ _ X _ _ _ O
                         // e.g., [1, 2] X _ _ _ _ X _ _ _ O
                         // e.g., [2, 1] X _ _ _ _ X _ _ _ O
-                        else if (!solved && (q == k || arrayAnswer[q] == Status.False) && arrayAnswer[q-1] == Status.True && (x != lenCurTrue))
+                        // [1, 1, 2] _ _ X O X X O _ X X when p = q = 5, x = 1 (second)
+                        else if (!solved && (q == k || arrayAnswer[q] == Status.False) 
+                                && arrayAnswer[q-1] == Status.True && (x != lenCurTrue)
+                                && p != q)
                         {
                             System.out.println("\tq is false and q-1 is true");
                             for (int i = q-1; i >= q-x; i--)  // Fill up from right
@@ -528,7 +584,7 @@ public class NonogramSolution
                         numE = numOfStatus(b, e, arrayAnswer, Status.Empty);
                         if (!solved)
                         {
-                            System.out.println("\tFor section [" + p + ", " + q +"]:");
+                            System.out.println("\tFor section (" + p + ", " + q +"):");
                             System.out.println("\t" + printCells(arrayAnswer)); 
                         } // end if                        
                         else
@@ -665,7 +721,7 @@ public class NonogramSolution
         return solved;
     } // end checkAllTrue
     
-    private int[] getpq(Status[] arrayAnswer, ArrayInfo curArrayInfo, int s, int q)
+    private int[] getpq_conditional(Status[] arrayAnswer, ArrayInfo curArrayInfo, int s, int q)
     {
         int b = curArrayInfo.getBeg();
         int e = curArrayInfo.getEnd();
@@ -697,7 +753,7 @@ public class NonogramSolution
         } // end if
         int[] result = {p,q};
         return result;
-    } // end getpq
+    } // end getpq_conditional
     
     private int[] updateEnds(int b, int e, ArrayInfo curArrayInfo, Status[] arrayAnswer)
     {
@@ -753,9 +809,9 @@ public class NonogramSolution
             else    // Make cells in this section that are farther than remainingT false
             {  
                 makeFalseBetweenTrues(curArrayInfo, arrayAnswer);
-                System.out.println("\t" + printCells(arrayAnswer)); 
+                //System.out.println("\t" + printCells(arrayAnswer)); 
                 makeFalseBetweenTruesOneApart(curArrayInfo, arrayAnswer);
-                System.out.println("\t" + printCells(arrayAnswer)); 
+                //System.out.println("\t" + printCells(arrayAnswer)); 
             } // end if
         } // end if
         return solved;
@@ -1208,9 +1264,9 @@ public class NonogramSolution
                 System.out.println("\t\tCurrent number: " + x);
                 System.out.println("\tMake false to the end.");
                 for (int i = idxEnd+1; i < e+1; i++) // Make false after the range                                    
-                    arrayAnswer[i] = Status.False;    
-                
+                    arrayAnswer[i] = Status.False;                    
                 System.out.println("\t" + printCells(arrayAnswer)); 
+                
                 // Make false around second largest true cluster
                 // e. g.,  _ O _ _ _ O O O O _ -> X O X _ _ O O O O _ 
                 if (trueArrayLen > 1)
@@ -1219,8 +1275,8 @@ public class NonogramSolution
                     {
                         if (trueClusterLen[i] == largestExceptLast)
                         {                            
-                            if (begIdxTrue[i]-1 >= b)   // Make false right before the true cluster
-                            {
+                            if (begIdxTrue[i]-1 >= b)   
+                            {   // Make false right before the true cluster
                                 System.out.println("\tMake false around true cluster.");
                                 arrayAnswer[begIdxTrue[i]-1] = Status.False;
                             }
@@ -1386,203 +1442,79 @@ public class NonogramSolution
         } // end if
     } // end falseEnd
     
-    
-    public class ArrayInfo
+    // General rules on filling up the grids
+    // Precondition: s >= 0, a > 0
+    private void fillUp(ArrayInfo curArrayInfo, Status[] arrayAnswer)
     {
-        private int[] thisArray; // Array
-        private boolean arraySolved; // indicates whether this array is solved
-        private int gridLen;  // length of row/column
-        private int num;    // The number of numbers in the array (array size)
-        private int begIdx, endIdx;   // beginning and end index
-        private int arraySum;    // Sum of all the numbers in the array
+        int[] curArray = curArrayInfo.getArray();
+        int b = curArrayInfo.getBeg();
+        int e = curArrayInfo.getEnd();
+        int a = curArrayInfo.getNum();
+        int ke = curArrayInfo.getLength();
+        int sum = curArrayInfo.getSum();
+        int toFill, sumX, i0, is;
         
-        public ArrayInfo(int[] array, int size)
-        {
-            thisArray = array;
-            arraySolved = false;
-            gridLen = size;
-            num = array.length;
-            begIdx = 0;
-            endIdx = size-1;
-            setSum();   // Calculate summation of numbers            
-        }
+        System.out.println("\tFill up by general rules...");
+        int x = curArray[0];  // current number    
+        System.out.println("\t\tCurrent number: " + x);
+        // Fill up the definite true cells
+        // Section 1         
+        toFill = 2 * x - (ke - ((sum - x) + (a - 1))); // number of cells to make true
+        sumX = 0;  // sum of numbers from x_0 to x_(i-1)
+        i0 = b + sumX + x - toFill;
+        is = b + sumX + x;
+        for (int i = i0; i < is; i++)
+            arrayAnswer[i] = Status.True;
+        System.out.println("\t" + printCells(arrayAnswer)); 
         
-        public int[] getArray()
+        if (a > 1)  // when there are more than one number
         {
-            return thisArray;
-        }
+            if (a > 2)
+            {                    
+                for (int s = 1; s < a-1; s++) // loop through numbers in the array (sections)
+                {   // Section s                   
+                    sumX += x;
+                    x = curArray[s];    // current number   
+                    toFill = 2 * x - (ke - ((sum - x) + (a - 1)));                     
+                    i0 = b + sumX + s + x - toFill;
+                    is = b + sumX + s + x;
+                    System.out.println("\t\tCurrent number: " + x);
+                    for (int i = i0; i < is; i++)
+                        arrayAnswer[i] = Status.True;                      
+                    System.out.println("\t" + printCells(arrayAnswer));                     
+                } // end for
+            } // end if
+            // Last section
+            sumX += x;
+            x = curArray[a-1];  
+            toFill = 2 * x - (ke - ((sum - x) + (a - 1)));                     
+            i0 = b + sumX + (a-1) + x - toFill;
+            is = b + sumX + (a-1) + x;
+            System.out.println("\t\tCurrent number: " + x);
+            for (int i = i0; i < is; i++)
+                arrayAnswer[i] = Status.True;  
+            System.out.println("\t" + printCells(arrayAnswer)); 
+        } // end if        
+    }// end fillUp
+    
+    // General rules on filling up the grids
+    private int[] getpq(ArrayInfo curArrayInfo, int s)
+    {
+        int[] curArray = curArrayInfo.getArray();
+        int b = curArrayInfo.getBeg();
+        int e = curArrayInfo.getEnd();
+        int a = curArrayInfo.getNum();
+        int sum = curArrayInfo.getSum();        
         
-        private void setArray(int[] newArray)
-        {
-            thisArray = newArray;
-        }
+        int x = curArray[s];  // current number            
+        int sumToX = 0;  // sum of numbers from x_0 to x_(s-1)        
+        for (int i = 0; i < s; i++) 
+            sumToX += curArray[i]; 
+        int sumFromX = sum - sumToX - x; // sum of numbers from x_(s+1) to x_(a-1)
+        int p = b + sumToX + s - 1;
+        int q = e - (sumFromX + (a - (s + 1))) + 1;              
         
-        public void removeFirstInArray()
-        {            
-            int[] newArray = new int[num-1]; // One size smaller            
-            for (int i = 0; i < num-1; i++)
-                newArray[i] = thisArray[i+1];
-            int newBeg = begIdx + thisArray[0] + 1;            
-            setBeg(newBeg);            
-            setArray(newArray); // Update the array            
-            setNum(newArray.length);  // Reduce the array size  
-            setSum();
-
-            System.out.println("\t\tb = " + getBeg());
-        }
-        public void removeLastInArray()
-        {            
-            int[] newArray = new int[num-1]; // One size smaller            
-            System.arraycopy(thisArray, 0, newArray, 0, num-1);
-            //for (int i = 0; i < num-1; i++)
-            //    newArray[i] = thisArray[i];
-            int newEnd = endIdx - (thisArray[num-1]+1);
-            //if (newEnd >= getBeg())
-            setEnd(newEnd);            
-            setArray(newArray); // Update the array            
-            setNum(newArray.length);  // Reduce the array size  
-            setSum();
-
-            System.out.println("\t\te = " + getEnd());
-        }
-        
-        /** Checks whether the array contains a number.
-         * @param aNum  An integer of interest to be found
-         * @return true if aNum is found in thisArray
-         */
-        public boolean contains(int aNum)
-        {
-            boolean found = false;
-            int i = 0;
-            while (!found && i < num)
-            {
-                found = (thisArray[i] == aNum);            
-                i++;
-            }
-            return found;
-        } // end contains
-        
-        /** Returns the index of a number
-         * @param aNum  An integer of interest to be found
-         * @return An integer containing the index of aNum;
-         *         -1 if not found
-         */
-        public int indexOf(int aNum)
-        {
-            int result = -1;
-            boolean found = false;
-            int i = 0;
-            while (!found && i < num)
-            {
-                found = (thisArray[i] == aNum);  
-                if (found)
-                    result = i;
-                else
-                    i++;
-            } // end while  
-            if (i == num)
-                result = -1;
-            return result;
-        } // end indexOf
-        
-        /** Checks if a number is the largest in the array
-         * @param aNum  An integer of interest
-         * @return true if aNum is the largest in the array
-         */
-        public boolean isMax(int aNum)
-        {            
-            // Find largest number
-            int curMax = thisArray[0];
-            for (int i = 0; i < num; i++)
-                curMax = Math.max(thisArray[i], curMax);
-            
-            return (curMax == aNum);
-        } // end isMax
-        
-        /** Return the summation of array number from beg to end.
-         * @param beg   An integer containing the beginning index
-         * @param end   An integer containing the beginning index
-         * @return A summation of numbers in the array from beg to end
-         */
-        public int sumArray(int beg, int end)
-        {
-            assert beg >= 0 && end < num;
-            int sum = 0;
-            for (int i = beg; i <= end; i++)
-                sum += thisArray[i];
-            return sum;            
-        } // end sumArray
-        /** Return the summation of array number from beg to the last number.
-         * @param beg   An integer containing the beginning index         
-         * @return A summation of numbers in the array from beg to end
-         */
-        public int sumArrayFrom(int beg)
-        {
-            return sumArray(beg, num-1);
-        } // end sumArray
-        
-        /** Checks whether the array is solved.
-         * @return A boolean true if the array is solved. 
-         */
-        public boolean isSolved()
-        {
-            return arraySolved;
-        }
-        
-        public void setSolved(boolean TF)
-        {
-            arraySolved = TF;
-        }
-        
-        public int getLength()
-        {
-            return gridLen;
-        }
-        
-        private void setLength(int newLen)
-        {
-            gridLen = newLen;
-        }
-        
-        public int getNum()
-        {
-            return num;
-        }        
-        
-        private void setNum(int newNum)
-        {
-            num = newNum;
-        }
-        
-        public int getBeg()
-        {
-            return begIdx;
-        }
-        public void setBeg(int newB)
-        {
-            begIdx = newB;
-            setLength(getEnd() - newB + 1); // Update the effective length of grid
-        }
-        
-        public int getEnd()
-        {
-            return endIdx;
-        }
-        public void setEnd(int newE)
-        {
-            endIdx = newE;
-            setLength(newE - getBeg() + 1); // Update the effective length of grid            
-        }
-        
-        public int getSum()
-        {
-            return arraySum;
-        }
-        private void setSum()
-        {
-            arraySum = sumArrayFrom(0);
-            //for (int i = 0; i < num; i++)                    
-            //    arraySum += thisArray[i];         
-        }
-    } // end ArrayInfo
-} // end NonogramSolution_v1_0
+        int[] pq = {p, q};
+        return pq;
+    }// end getpq
+} // end NonogramSolution_v1_2
