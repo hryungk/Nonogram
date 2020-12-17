@@ -110,7 +110,7 @@ public class BorderPanel extends JPanel
                     {           
                         System.out.println("Array " + Arrays.toString(PROB_ROW[i]) +
                             " -> " + Arrays.toString(row_arrays[i].getArray()) + ":");
-                        Status[] temp = newSolution.findArraySolution(RowCol.Row,i, m);
+                        Status[] temp = newSolution.findArraySolution(RowCol.Row,i, m, answer,row_arrays[i]);
                         System.arraycopy(temp, 0, answer[i], 0, n); 
                         //for (int j = 0; j < n; j++)
                         //    answer[i][j] = temp[j]; 
@@ -129,7 +129,7 @@ public class BorderPanel extends JPanel
                     {                        
                         System.out.println("Array " + Arrays.toString(PROB_COL[j]) +
                             "->" + Arrays.toString(col_arrays[j].getArray()) + ":");
-                        Status[] temp = newSolution.findArraySolution(RowCol.Column, j, n);
+                        Status[] temp = newSolution.findArraySolution(RowCol.Column, j, n, answer, col_arrays[j]);
                         for (int i = 0; i < n; i++)
                         {
                             answer[i][j] = temp[i]; 

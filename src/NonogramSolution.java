@@ -13,10 +13,10 @@ public class NonogramSolution
     private final int[][] PROB_ROW;     // Row arrays of the problem
     private final int[][] PROB_COL;     // Column arrays of the problem   
     private final Status[][] SOLUTION;  // Solution to the problem
-    private Status[][] answer;          // Answer that this solver produces
+    private Status[][] myAnswer;          // Answer that this solver produces
     private final int m, n;             // size of row and column, respectively
-    private ArrayInfo[] row_arrays;     // An array of array information objects for row arrays
-    private ArrayInfo[] col_arrays;     // An array of array information objects for column arrays
+    private final ArrayInfo[] row_arrays;     // An array of array information objects for row arrays
+    private final ArrayInfo[] col_arrays;     // An array of array information objects for column arrays
     
     /** Initializes parameters by loading a new problem.
      * @param newProblem A Nonogram problem to solve
@@ -39,10 +39,10 @@ public class NonogramSolution
             col_arrays[j] = new ArrayInfo(PROB_COL[j], n);
         
         
-        answer = new Status[m][n];
+        myAnswer = new Status[m][n];
         for (int i = 0; i < m; i++) // Initialize answer as Empty
             for (int j = 0; j < n; j++)
-                answer[i][j] = Status.Empty;        
+                myAnswer[i][j] = Status.Empty;        
     } // end constructor    
     
     /** Solves the given problem.
@@ -67,8 +67,8 @@ public class NonogramSolution
                 {
                     System.out.println("Array " + Arrays.toString(PROB_ROW[i]) +
                             " -> " + Arrays.toString(row_arrays[i].getArray()) + ":");
-                    Status[] temp = findArraySolution(RowCol.Row,i, m);
-                    System.arraycopy(temp, 0, answer[i], 0, n); 
+                    Status[] temp = findArraySolution(RowCol.Row,i, m, myAnswer, row_arrays[i]);
+                    System.arraycopy(temp, 0, myAnswer[i], 0, n); 
                     //for (int j = 0; j < n; j++)
                     //    answer[i][j] = temp[j]; 
                 }
@@ -85,11 +85,11 @@ public class NonogramSolution
                 {
                     System.out.println("Array " + Arrays.toString(PROB_COL[j]) +
                             "->" + Arrays.toString(col_arrays[j].getArray()) + ":");
-                    Status[] temp = findArraySolution(RowCol.Column, j, n);
+                    Status[] temp = findArraySolution(RowCol.Column, j, n, myAnswer, col_arrays[j]);
                     for (int i = 0; i < n; i++)
                     {
-                        answer[i][j] = temp[i]; 
-                        noEmpty = noEmpty && (answer[i][j] != Status.Empty);
+                        myAnswer[i][j] = temp[i]; 
+                        noEmpty = noEmpty && (myAnswer[i][j] != Status.Empty);
                     } // end for
                 }
                 else                                    
@@ -109,18 +109,19 @@ public class NonogramSolution
         boolean result = true;
         for (int i = 0; i < m; i ++)
             for (int j = 0; j < n; j++)
-                result = result && (answer[i][j] == SOLUTION[i][j]);
+                result = result && (myAnswer[i][j] == SOLUTION[i][j]);
         return result;
     } // end isCorrect
     
     /** Construct a string that shows the answer that this solver produces.
      * @return A String containing the answer to the problem.
      */
+    @Override
     public String toString()
     {
         String result = "Answer to " + m + " x " + n + " Nonogram Puzzle:\n";
         for (int i = 0; i < m; i++)            
-            result += printCells(answer[i]) + "\n";                    
+            result += printCells(myAnswer[i]) + "\n";                    
         return result;
     } // end toString   
     
@@ -128,30 +129,26 @@ public class NonogramSolution
      * @param rowcol  Indicator whether a row or a column is being investigated
      * @param idx The index of row/column in the 2D array
      * @param k The length of the row or column
+     * @param answer A 2D array of status of each cell of the grid. 
+     * @param curArrayInfo  An ArrayInfo object containing current information of the row/col array.
      * @return The updated status of the given array
      */
-    public Status[] findArraySolution(RowCol rowcol, int idx, int k)
-    {   
-        ArrayInfo curArrayInfo;                       
+    public Status[] findArraySolution(RowCol rowcol, int idx, int k, Status[][] answer, ArrayInfo curArrayInfo)
+    {           
         Status[] arrayAnswer = new Status[k];    // The answer for the curArray          
-        if (rowcol == RowCol.Row)           // When inspecting a row
-        {
-            curArrayInfo = row_arrays[idx];
-            arrayAnswer = answer[idx];            
-        }
-        else // (rowcol == RowCol.Column)   // When inspecting a column
-        {
-            curArrayInfo = col_arrays[idx];            
+        if (rowcol == RowCol.Row)           // When inspecting a row                    
+            arrayAnswer = answer[idx];                    
+        else // (rowcol == RowCol.Column)   // When inspecting a column                    
             for (int i = 0; i < k; i++)
                 arrayAnswer[i] = answer[i][idx];
-        }        
+                
         int b = curArrayInfo.getBeg();  // effective beginning index
         int e = curArrayInfo.getEnd();  // effective end index
         // Push beginning and end index inward if there are consecutive Falses.
         int[] be = updateEnds(b, e,curArrayInfo, arrayAnswer);            
         b = be[0]; 
         e = be[1];
-        int[] oldbe = be;
+        int[] oldbe;// = be;
         
         int[] curArray = curArrayInfo.getArray(); // Row/column array        
         int a = curArrayInfo.getNum();            // The number of numbers in curArray
@@ -333,7 +330,7 @@ public class NonogramSolution
                     // When the section ended where there are still numbers in the array to be investigated,
                     // use the previous p and q.
                     // Otherwise, use a new pair of p and q.
-                    if (!(a > 1 && s <= a - 1 && q == e + 1))
+                    if (!(a > 1 && s > 0 && q == e + 1))
                     {
                         // Determine current section (p, q), exclusive.  
                         // First determine sections based on true/false cells in the current row/column.
@@ -413,8 +410,13 @@ public class NonogramSolution
 
                         // Find an empty cluster whose length is greather than or equal to x and in a previous section.
                         boolean foundEarlierLargerEmpty = false;
+                        int earlierLargerEmptyLen = 0;
                         for (int i = 0; i < numEmptyClusters; i++)
+                        {
                             foundEarlierLargerEmpty = foundEarlierLargerEmpty || (begIdxEmpty[i] < p && emptyClusterLen[i] >= x);
+                            if (foundEarlierLargerEmpty)
+                                earlierLargerEmptyLen = Math.max(earlierLargerEmptyLen,emptyClusterLen[i]); // In case there are multiple numbers meeting the requirement, choose bigger number.
+                        }
 
                         // Find an empty cluster whose length is the same as x and in the current section.
                         // Or empty cluster + true cluster == x
@@ -443,7 +445,7 @@ public class NonogramSolution
                             int curBegIdxEmpty = begIdxEmpty[i];
                             int curEmptyClusterLen = emptyClusterLen[i];
                             foundLaterLargerEmpty = foundLaterLargerEmpty || (curBegIdxEmpty > q && curEmptyClusterLen >= x);
-                            if (foundLaterLargerEmpty)
+                            if (foundLaterLargerEmpty && curEmptyClusterLen >= x)
                                 laterLargerEmptyLen = curEmptyClusterLen;
                             // Check whether there is a true cluster coming before the empty cluster whose longer than x
                             // (because then x doesn't belong to this empty cluster. e.g., _ _ _ X X O O O _ _ and current number is 2)
@@ -452,29 +454,46 @@ public class NonogramSolution
                             int thisLenTrue = thisTrue[1];    // Length of True cluster
                             if (thisLocTrue != -1)  // there exist true cluster between q and current empty cluster
                                 foundLaterLargerEmpty = foundLaterLargerEmpty && (thisLenTrue <= x);
-                        } // end for                                       
+                        } // end for  
+                        
+                        // Check whether empty clusters are adjacent to true clusters.
+                        // In this case, it is not a true empty cluster, rather a potential true cluster.
+                        boolean emptyBetweenO = false;
+                        for (int i = 0; i < numEmptyClusters; i++)
+                        {
+                            int curBegIdxEmpty = begIdxEmpty[i];
+                            int curEmptyClusterLen = emptyClusterLen[i];
+                            if (curBegIdxEmpty > 0)
+                                emptyBetweenO = emptyBetweenO || (arrayAnswer[curBegIdxEmpty-1] == Status.True);
+                            if (curBegIdxEmpty+curEmptyClusterLen < k)
+                                emptyBetweenO = emptyBetweenO || (arrayAnswer[curBegIdxEmpty+curEmptyClusterLen] == Status.True);
+                        } // end for
 
                         int i0 =  p + 1 + kp - x;   // Beginning index of true cells 
                         int sumFromX = 0;   // Summation of numbers + 1 space from x to the end in the array
                         for (int i = s; i < a; i++)
                             sumFromX += curArray[i] + 1;
                         sumFromX -= 1;  // last number doesn't need one space
+                        int sumToX = 0; // Summation of numbers + 1 space from first number to x
+                        for (int i = 0; i <= s; i++)
+                            sumToX += curArray[i] + 1;
+                        sumToX -= 1;
                         /* Fill up the middle (2x-k') cells. */
                         // When there are more than one number left in the array but it is alreay filled in the middle of the row/column, 
                         // (so that the code still doesn't know it is filled), and there are multiple locations for the last number to be,
                         // we should skip this. Example is _XXOXX_XOO and array is [1,1,2]                                                                   
-                        // [3] _ _ _ _ _ _ X _ _ _ --> Don't fill, [1, 1, 3] _ _ _ X _ X _ _ _ X --> _ _ _ X _ X O O O X
+                        // [1, 1, 3] _ _ _ X _ X _ _ _ X --> _ _ _ X _ X O O O X
                         // [2, 2] _ _ X X X X _ _ _ _ --> O O X X X X _ _ _ _
                         // [1, 2, 1] O X _ _ _ X _ _ _ _ --> Don't fill
-                        // [1, 2, 1] _ _ _ X _ _ X _ _ _ --> _ _ _ X O O X _ _ _
-                        // [1, 2, 1] _ _ _ _ X X O O X _ --> _ _ _ _ X X O O X O
+                        // [1, 1, 2] _ _ X O X _ _ O _ X --> Don't fill                                                
                         // [1, 1, 2] _ X O X X X _ O _ X --> O X O X X X _ O _ X (should be fixed P6, modify with foundLaterSameTrue)    
                         if (!solved && (x > kp/2) && (kp >= x) && (i0 >= b) &&
                             (!((sum - numT == x && a >= 2) || (kp < numE && a == 1) || foundLaterSameTrue ||
-                            (numEmptyClusters == a && emptyClusterLen[s] == x && numT==x) ||
-                            (numEmptyClusters != a && q == e+1 && foundThisSameEmpty && foundEarlierLargerEmpty)) ||
-                            (numEmptyClusters == a && a >= 2 && sumFromX > laterLargerEmptyLen) ||
-                            (a > 1 && s == a - 1 && foundEarlierLargerTrue && foundThisSameEmpty)))// ||
+                            (numEmptyClusters == a && emptyClusterLen[s] == x && numT==x) ||    // [1,1,2] _XXOXX_XOO
+                            foundEarlierLargerEmpty || foundLaterLargerEmpty) || // [3] _ _ _ _ _ _ X _ _ _
+                            (numEmptyClusters == a && a >= 2 && sumFromX > laterLargerEmptyLen && !emptyBetweenO && sumToX > earlierLargerEmptyLen) ||// [1,2,1] _ _ _ X _ _ X _ _ _ --> _ _ _ X O O X _ _ _
+                            (a > 1 && s == a - 1 && foundEarlierLargerTrue && foundThisSameEmpty) ||// [1,2,1] _ _ _ _ X X O O X _ --> _ _ _ _ X X O O X O
+                            (numEmptyClusters == a && q == e+1 && foundThisSameEmpty && foundEarlierLargerEmpty && sumToX > earlierLargerEmptyLen)))// [1, 1, 3] _ _ _ X _ X _ _ _ X --> _ _ _ X _ X O O O X
                             //(foundLaterSameTrue && foundThisSameEmpty && laterLargerEmptyLen <= x)))
                         {
                             // When there is a true cluster whose length is the same as x and not in the current section, don't fill up.
@@ -532,9 +551,10 @@ public class NonogramSolution
                         // e.g., [1, 2] X _ _ _ _ X O _ _ _ 
                         // e.g., [2, 1] X _ _ _ _ X O _ _ _ 
                         // e.g., [1, 1, 2] _ _ _ O _ X O _ _ X 
+                        // [2, 1] _ _ _ X O _ _ _ X X --> Don't fill
                         if (!solved && (p == -1 || arrayAnswer[p] == Status.False) 
                             && arrayAnswer[p+1] == Status.True && (x != lenCurTrue)
-                            && p != q) 
+                            && p != q && sum + (a-1) > kp) 
                         {
                             System.out.println("\tp is false and p+1 is true");
                             for (int i = p+1; i <= p+x; i++)  // Fill up from left
@@ -555,9 +575,10 @@ public class NonogramSolution
                         // e.g., [1, 2] X _ _ _ _ X _ _ _ O
                         // e.g., [2, 1] X _ _ _ _ X _ _ _ O
                         // [1, 1, 2] _ _ X O X X O _ X X when p = q = 5, x = 1 (second)
+                        // [2, 1]_ _ _ O X _ _ _ X X --> Don't fill
                         else if (!solved && (q == k || arrayAnswer[q] == Status.False) 
                                 && arrayAnswer[q-1] == Status.True && (x != lenCurTrue)
-                                && p != q)
+                                && p != q && sum + (a-1) > kp)
                         {
                             System.out.println("\tq is false and q-1 is true");
                             for (int i = q-1; i >= q-x; i--)  // Fill up from right
@@ -631,7 +652,20 @@ public class NonogramSolution
         if (!Arrays.equals(oldbe, be))    // If anything is updated, print out the array.
             System.out.println("\tUpdating Ends:\n\tb = " + b + ", e = " + e + ", ke = " + ke);        
         // Update solved arrays
-        curArrayInfo.setSolved(solved);           
+        curArrayInfo.setSolved(solved);     
+        
+        if (rowcol == RowCol.Row)           // When inspecting a row
+        {
+            myAnswer[idx] = arrayAnswer;
+            row_arrays[idx] = curArrayInfo;
+        }
+        else // (rowcol == RowCol.Column)   // When inspecting a column                    
+        {
+            for (int i = 0; i < k; i++)
+                myAnswer[i][idx] = arrayAnswer[i];
+            col_arrays[idx] = curArrayInfo;
+        } // end if
+        myAnswer = answer;
         return arrayAnswer;
     } // end findArraySolution
     
@@ -1145,7 +1179,7 @@ public class NonogramSolution
         for (int i = 0; i < trueClusterLen.length; i++)
             foundLaterTrue = foundLaterTrue || (begIdxTrue[i] > q);                        
         // Find an empty cluster whose length is smaller than x and in the next section.
-        boolean foundLaterSmallerEmpty = false;
+        boolean foundLaterSmallerEmpty;// = false;
         for (int i = 0; i < emptyClusterLen.length; i++)
         {
             int curBegIdxEmpty = begIdxEmpty[i];
