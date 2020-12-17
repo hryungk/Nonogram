@@ -7,7 +7,7 @@
  * @author Hyunryung Kim    hryungk@gmail.com
  */
 import java.util.Arrays;
-public class NonogramSolution 
+public class NonogramSolution
 {   
     private final int[][] PROB_ROW;          // Row arrays of the puzzle
     private final int[][] PROB_COL;          // Column arrays of the puzzle   
@@ -135,11 +135,20 @@ public class NonogramSolution
         }        
         int b = curArrayInfo.getBeg();  // effective beginning index
         int e = curArrayInfo.getEnd();  // effective end index
-        System.out.println("b = " + b + ", e = " + e);
+        // Make beginning index the first non-false cell
+        while (b <= e && arrayAnswer[b] == Status.False)
+            b++;
+        curArrayInfo.setBeg(b);
+        // Make end index the first non-false cell from the end
+        while (e >= b && arrayAnswer[e] == Status.False)
+            e--;
+        curArrayInfo.setEnd(e);            
         
         int[] curArray = curArrayInfo.getArray(); // Row/column array        
-        int a = curArray.length;            // The number of numbers in curArray
+        int a = curArrayInfo.getNum();            // The number of numbers in curArray
         int ke = curArrayInfo.getLength();       // Effective length of grid
+        System.out.println("b = " + b + ", e = " + e + ", ke = " + ke);
+        
         boolean solved = false;             // true if curArray is solved        
         int sum = 0;                        // sum of numbers in curArray
         for (int i = 0; i < a; i++)                    
@@ -203,8 +212,7 @@ public class NonogramSolution
             if (a > 1)  // when there are more than one number
             {
                 if (a > 2)
-                {
-                    //y = curArray[1];        // current number         
+                {                    
                     for (int s = 1; s < a-1; s++) // loop through numbers in the array (sections)
                     {   // Section s: from (x+1) to (x+1+y) 
                         x = curArray[s-1];      // previous number
@@ -283,13 +291,14 @@ public class NonogramSolution
                     // When there are more than one number left in the array but it is alreay filled in the middle of the row/column, 
                     // (so that the code still doesn't know it is filled), and there are multiple locations for the last number to be,
                     // we should skip this. Example is _XXOXX_XOO and array is [1,1]
-                    if ((x > kp/2) && (i0 >= b) && !(sum - numT == x && a >= 2))// && (numE <= x)
+                    if ((x > kp/2) && (i0 >= b) && !(sum - numT == x && a >= 2) && !(a == 1 && numE > x))// && (numE <= x)
                     {
                         for (int i = i0; i <= p + x; i++)
                             if (arrayAnswer[i] == Status.Empty)
                                 arrayAnswer[i] = Status.True;
                         
-                    } // end if      
+                    } // end if 
+                    
                     if (x > kp) // When there is less number of empty cells than the current number, make false
                     {
                         for (int i = p + 1; i < q; i++)
@@ -300,21 +309,23 @@ public class NonogramSolution
                     int firstTrue = p+1;
                     while (firstTrue < e+1 && arrayAnswer[firstTrue] != Status.True)
                         firstTrue++;
-                    if (firstTrue < e+1 && firstTrue <= q && q <= e+1)
+                    int numTCur = 0;    // Number of True in the current section
+                    int lastTrue = firstTrue;
+                    for (int i = firstTrue; i < q; i++)
                     {
-                        int numTCur = 0;    // Number of True in the current section
-                        int lastTrue = firstTrue;
-                        for (int i = firstTrue; i < q; i++)
-                            if (arrayAnswer[i] == Status.True)
-                            {
-                                numTCur++;
-                                lastTrue = i;
-                            }
-                        int remainingT = x - numTCur;   // Remaining number of true
-                         // System.out.println("\tfirstTrue = " + firstTrue +
-                         //       ", numTCur = " + numTCur + ", lastTrue = " + 
-                         //       lastTrue + ", remainingT = " + remainingT);
-                        //System.out.println("\tnumT = " + numT + ", sum = " + sum);
+                        if (arrayAnswer[i] == Status.True)
+                        {
+                            numTCur++;
+                            lastTrue = i;
+                        } // end if
+                    } // end for
+                    int remainingT = x - numTCur;   // Remaining number of true
+                     // System.out.println("\tfirstTrue = " + firstTrue +
+                     //       ", numTCur = " + numTCur + ", lastTrue = " + 
+                     //       lastTrue + ", remainingT = " + remainingT);
+                    //System.out.println("\tnumT = " + numT + ", sum = " + sum);
+                    if (firstTrue < e+1 && firstTrue <= q && q <= e+1)
+                    {                        
                         if (remainingT == 0 && numT == sum)    // All true are found
                         {
                             System.out.println("\tSolution is found for the array; Remaining number of True == 0");
@@ -323,24 +334,28 @@ public class NonogramSolution
                             solved = true;
                         }
                         else    // Make cells in this section that are farther than remainingT false
-                        {     
-                            //System.out.println("Code proceeded to remainingT != 0");    
-                            if (p == b-1 || arrayAnswer[p] == Status.False)
-                                for (int i = p+1; i < firstTrue - remainingT-1;i++)
-                                    arrayAnswer[i] = Status.False;
-                            //System.out.println("q==ke?" + (q==ke));
-                            //System.out.println("q = " + q + ", ke = " + ke);
-                            if (q == e+1 || arrayAnswer[q] == Status.False)
+                        {                               
+                            if (a < 2)  // when there's only one number in the array
                             {
-                                //System.out.println("Code proceeded to q == ke");
-                                for (int i = lastTrue + remainingT + 1; i < q; i++)
-                                    arrayAnswer[i] = Status.False;    
-                            } // end if                            
+                                //System.out.println("Code proceeded to remainingT != 0");    
+                                if (p == b-1 || arrayAnswer[p] == Status.False)
+                                    for (int i = p+1; i < firstTrue - remainingT;i++)
+                                        arrayAnswer[i] = Status.False;
+                                //System.out.println("q==ke?" + (q==ke));
+                                //System.out.println("q = " + q + ", ke = " + ke);
+                                if (q == e+1 || arrayAnswer[q] == Status.False)                                
+                                    for (int i = lastTrue + remainingT + 1; i < q; i++)
+                                        arrayAnswer[i] = Status.False;                                    
+                            }
+                            else   // when there are more than 1 numbers in the array
+                            {                                
+                                //if (firstTrue <= x+b && s == 0) // belongs to the first number                                    
+                            } // end if
                         } // end if
-                    } // end if
+                    }                    
                 } // end if     
                 
-                // Update number of True and Empty
+                // Update number of True and Empty before proceeding to the next number
                 numT = 0;
                 numE = 0;
                 for (int i = b; i < e+1; i++)   
@@ -367,6 +382,7 @@ public class NonogramSolution
         while (e >= b && arrayAnswer[e] == Status.False)
             e--;
         curArrayInfo.setEnd(e);
+        
         // Update solved arrays
         curArrayInfo.setSolved(solved);           
         return arrayAnswer;
@@ -419,7 +435,8 @@ public class NonogramSolution
             arrayAnswer[i0] = Status.False;      
         // Remove the first number in this array
         curArrayInfo.removeFirst();
-    }
+    } // end removeBeg
+    
     private void removeEnd(int[] curArray, Status[] arrayAnswer,  ArrayInfo curArrayInfo)
     {
         System.out.println("\tRemoving the last number in the array");
@@ -436,7 +453,7 @@ public class NonogramSolution
             arrayAnswer[i0] = Status.False;                            
         // Remove the last number in this array
         curArrayInfo.removeLast();          
-    }
+    } // end removeEnd
     
     private boolean checkAllTrue(ArrayInfo curArrayInfo, Status[] arrayAnswer, boolean solved)
     {        
@@ -467,7 +484,8 @@ public class NonogramSolution
             //System.out.println("\t" + printCells(arrayAnswer));
         } // end if
         return solved;
-    }
+    } // end checkAllTrue    
+    
     
     public class ArrayInfo
     {
@@ -502,8 +520,7 @@ public class NonogramSolution
             int[] newArray = new int[num-1]; // One size smaller            
             for (int i = 0; i < num-1; i++)
                 newArray[i] = thisArray[i+1];
-            setBeg(begIdx + thisArray[0] + 1);
-            setLength(gridLen-(thisArray[0] + 1));   // Reduce the grid length             
+            setBeg(begIdx + thisArray[0] + 1);            
             setArray(newArray); // Update the array            
             setNum(newArray.length);  // Reduce the array size            
         }
@@ -513,8 +530,7 @@ public class NonogramSolution
             System.arraycopy(thisArray, 0, newArray, 0, num-1);
             //for (int i = 0; i < num-1; i++)
             //    newArray[i] = thisArray[i];
-            setEnd(endIdx - (thisArray[num-1]+1));
-            setLength(gridLen-(thisArray[num-1] + 1));   // Reduce the grid length             
+            setEnd(endIdx - (thisArray[num-1]+1));            
             setArray(newArray); // Update the array            
             setNum(newArray.length);  // Reduce the array size            
         }
@@ -556,6 +572,7 @@ public class NonogramSolution
         public void setBeg(int newB)
         {
             begIdx = newB;
+            setLength(getEnd() - newB + 1); // Update the effective length of grid
         }
         
         public int getEnd()
@@ -565,6 +582,7 @@ public class NonogramSolution
         public void setEnd(int newE)
         {
             endIdx = newE;
+            setLength(newE - getBeg() + 1); // Update the effective length of grid
         }
         
     } // end ArrayInfo
