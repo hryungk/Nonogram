@@ -9,28 +9,28 @@
 import java.util.Arrays;
 public class NonogramSolution 
 {   
-    private final int[][] ROW_ARRAYS;          // Row arrays of the puzzle
-    private final int[][] COL_ARRAYS;          // Column arrays of the puzzle   
+    private final int[][] PROB_ROW;          // Row arrays of the puzzle
+    private final int[][] PROB_COL;          // Column arrays of the puzzle   
     private final Status[][] SOLUTION;          // Answer to the puzzle
     private Status[][] answer;
     private final int m, n;             // size of row and column, respectively
-//    private enum RowCol {Row, Column}   // State whether row or column    
+    private enum RowCol {Row, Column}   // State whether row or column    
     private ArrayInfo[] row_arrays; // An array of array information objects for row arrays
     private ArrayInfo[] col_arrays; // An array of array information objects for column arrays
-    public NonogramSolution(NonogramProblem newProblem)
+    public NonogramSolution_v0_2(NonogramProblem newProblem)
     {        
-        ROW_ARRAYS = newProblem.getRowArray();
-        COL_ARRAYS = newProblem.getColumnArray();
+        PROB_ROW = newProblem.getRowArray();
+        PROB_COL = newProblem.getColumnArray();
         
-        m = ROW_ARRAYS.length;
-        n = COL_ARRAYS.length;   
+        m = PROB_ROW.length;
+        n = PROB_COL.length;   
         
         row_arrays = new ArrayInfo[m];
         for (int i = 0; i < m; i++)
-            row_arrays[i] = new ArrayInfo(ROW_ARRAYS[i], m);
+            row_arrays[i] = new ArrayInfo(PROB_ROW[i], m);
         col_arrays = new ArrayInfo[n];
         for (int j = 0; j < n; j++)
-            col_arrays[j] = new ArrayInfo(COL_ARRAYS[j], n);
+            col_arrays[j] = new ArrayInfo(PROB_COL[j], n);
         
         SOLUTION = newProblem.getSolution();
         answer = new Status[m][n];
@@ -47,15 +47,16 @@ public class NonogramSolution
         {
             noEmpty = true;     // initialize noEmpty every loop
             System.out.println("=======================================================\n" +
-                    "\t\t\tLoop "+ loopCount +
+                    "\t\t\tLoop "+ (loopCount+1) +
                                "\n=======================================================");
-            System.out.println("------------------------ Row" +
+            System.out.println("------------------------ Row - " + (loopCount+1) +
                                " ------------------------");            
             for (int i = 0; i < m; i++) // Scan rows
             {                
                 if (!row_arrays[i].isSolved())
                 {
-                    System.out.println("Array " + Arrays.toString(row_arrays[i].getArray()) + ":");
+                    System.out.println("Array " + Arrays.toString(PROB_ROW[i]) +
+                            " -> " + Arrays.toString(row_arrays[i].getArray()) + ":");
                     Status[] temp = findArraySolution(RowCol.Row,i, m);
                     System.arraycopy(temp, 0, answer[i], 0, n); 
                     //for (int j = 0; j < n; j++)
@@ -64,17 +65,18 @@ public class NonogramSolution
                 else
                 {                    
                     System.out.println("Array "
-                                       + Arrays.toString(row_arrays[i].getArray()) 
+                                       + Arrays.toString(PROB_ROW[i]) 
                                        + " is solved.");
                 }
             } // end for
-            System.out.println("------------------------ Column" +
+            System.out.println("------------------------ Column - " + (loopCount+1) +
                                " ------------------------");
             for (int j = 0; j < n; j++) // Scan columns
             {
                 if (!col_arrays[j].isSolved())
                 {
-                    System.out.println("Array " + Arrays.toString(col_arrays[j].getArray()) + ":");
+                    System.out.println("Array " + Arrays.toString(PROB_COL[j]) +
+                            "->" + Arrays.toString(col_arrays[j].getArray()) + ":");
                     Status[] temp = findArraySolution(RowCol.Column, j, n);
                     for (int i = 0; i < n; i++)
                     {
@@ -85,7 +87,7 @@ public class NonogramSolution
                 else
                 {                    
                     System.out.println("Array "
-                                       + Arrays.toString(col_arrays[j].getArray()) 
+                                       + Arrays.toString(PROB_COL[j]) 
                                        + " is solved.");
                 } // end if
             } // end for
@@ -116,10 +118,10 @@ public class NonogramSolution
      * @param k The length of the row or column
      * @return The updated status of the given array
      */
-    public Status[] findArraySolution(RowCol rowcol, int idx, int k)
+    private Status[] findArraySolution(RowCol rowcol, int idx, int k)
     {   
         ArrayInfo curArrayInfo;                       
-        Status[] arrayAnswer = new Status[k];    // The answer for the curArray  
+        Status[] arrayAnswer = new Status[k];    // The answer for the curArray          
         if (rowcol == RowCol.Row)           // When inspecting a row
         {
             curArrayInfo = row_arrays[idx];
@@ -127,31 +129,46 @@ public class NonogramSolution
         }
         else // (rowcol == RowCol.Column)   // When inspecting a column
         {
-            curArrayInfo = col_arrays[idx];
+            curArrayInfo = col_arrays[idx];            
             for (int i = 0; i < k; i++)
                 arrayAnswer[i] = answer[i][idx];
-        }
+        }        
+        int b = curArrayInfo.getBeg();  // effective beginning index
+        int e = curArrayInfo.getEnd();  // effective end index
+        // Make beginning index the first non-false cell
+        while (b <= e && arrayAnswer[b] == Status.False)
+            b++;
+        curArrayInfo.setBeg(b);
+        // Make end index the first non-false cell from the end
+        while (e >= b && arrayAnswer[e] == Status.False)
+            e--;
+        curArrayInfo.setEnd(e);            
+        
         int[] curArray = curArrayInfo.getArray(); // Row/column array        
-        int a = curArray.length;            // The number of numbers in curArray
-        k = curArrayInfo.getLength();       // Effective length of grid
+        int a = curArrayInfo.getNum();            // The number of numbers in curArray
+        int ke = curArrayInfo.getLength();       // Effective length of grid
+        System.out.println("b = " + b + ", e = " + e + ", ke = " + ke);
+        
         boolean solved = false;             // true if curArray is solved        
         int sum = 0;                        // sum of numbers in curArray
         for (int i = 0; i < a; i++)                    
             sum += curArray[i];
-        int numT = 0;                       // The number of True cells
-        int numE = 0;                       // The number of Empty cells   
-        for (int i = 0; i < k; i++)
+        int numT = 0;                       // The number of True cells    
+        int numE = 0;                       // The number of Empty cells    
+        for (int i = b; i < e+1; i++)
         {
             if (arrayAnswer[i] == Status.True)
-                numT++;                               
+                numT++;
             if (arrayAnswer[i] == Status.Empty)
-                    numE++;              
+                numE++;
         } // end for
         
         // Start investigation!
-        if (sum + (a - 1) == k) // initial condition automatically solves
+        if (sum + (a - 1) == ke) // initial condition automatically solves
         {
-            int count = 0;      // index count for the answer array
+            System.out.println("\tSolution is found for the array; sum of numbers and spaces == effective length of row/column.");            
+                        
+            int count = b;      // index count for the answer array
             for (int s = 0; s < a; s++) // loop through numbers in the array (sections)
             {
                 int x = curArray[s];    // current number
@@ -161,7 +178,7 @@ public class NonogramSolution
                     arrayAnswer[count] = Status.True;
                     count++;
                 } // end for
-                if (count < k)  // After filling up cells, the immediate cell 
+                if (count < e+1)  // After filling up cells, the immediate cell 
                 {               // after the section must be false unless last
                     arrayAnswer[count] = Status.False;
                     count++;
@@ -172,71 +189,69 @@ public class NonogramSolution
         } 
         else if (sum == numT)   // When all true cells are found
         {            
-            System.out.println("\tSolution is found for the array " + Arrays.toString(curArray));
-            
+            System.out.println("\tSolution is found for the array; sum of numbers == number of True");
+                       
             // Make all empty cells False
-            for (int i = 0; i < k; i++) 
+            for (int i = b; i < e+1; i++) 
                 if (arrayAnswer[i] == Status.Empty)
                     arrayAnswer[i] = Status.False;
             solved = true;
             System.out.println("\t" + printCells(arrayAnswer));
         }
-        else if (sum + (a - 1) == k - 1)    // When the sum is one short in the beginning
+        else if (sum + (a - 1) == ke - 1)    // When the sum is one short in the beginning
         {
+            System.out.println("\tsum of numbers and spaces == one short of effective row/column length");            
+            
             int x = curArray[0];  // current number    
             System.out.println("\tCurrent number: " + x);
             // Section 1: from 0 to x            
-            for (int i = 1; i < x; i++)
+            for (int i = b+1; i < b+x; i++)
                 arrayAnswer[i] = Status.True;
-            int count = x + 1;  // count of total cells investigated
+            int count = b+x + 1;  // count of total cells investigated
             int y;      // current number   
             if (a > 1)  // when there are more than one number
             {
-                y = curArray[1];        // current number         
-                for (int s = 1; s < a-1; s++) // loop through numbers in the array (sections)
-                {   // Section s: from (x+1) to (x+1+y) 
-                    x = curArray[s-1];      // previous number
-                    y = curArray[s];    // current number         
-                    System.out.println("\tCurrent number: " + y);
-                    for (int i = x+2; i < x+1+y; i++)
-                        arrayAnswer[i] = Status.True;  
-                    count += y + 1;
-                } // end for
-
-                // Last section: from count to (k-1)
+                if (a > 2)
+                {                    
+                    for (int s = 1; s < a-1; s++) // loop through numbers in the array (sections)
+                    {   // Section s: from (x+1) to (x+1+y) 
+                        x = curArray[s-1];      // previous number
+                        y = curArray[s];    // current number         
+                        System.out.println("\tCurrent number: " + y);
+                        for (int i = b+x+2; i < b+x+1+y; i++)
+                            arrayAnswer[i] = Status.True;  
+                        count += y + 1;
+                    } // end for
+                } // end if
+                // Last section: from count to (ke-1)
                 y = curArray[a-1];
                 System.out.println("\tCurrent number: " + y);
-                for (int i = count+1; i < k-1; i++)
+                for (int i = count+1; i < e+1-1; i++)
                     arrayAnswer[i] = Status.True;                
             } // end if
+            if (arrayAnswer[b] == Status.True)  // first cell is filled    
+                removeBeg(curArray, arrayAnswer, curArrayInfo);        
+            if (arrayAnswer[e+1-1] == Status.True)    // last cell is filled
+                removeEnd(curArray, arrayAnswer, curArrayInfo);
+            solved = checkAllTrue(curArrayInfo, arrayAnswer, solved);
             System.out.println("\t" + printCells(arrayAnswer));
         }
-        else if (arrayAnswer[0] == Status.True)  // first cell is filled
+        else if (arrayAnswer[b] == Status.True)  // first cell is filled
         {
-            int x = curArray[0];
-            System.out.println("\tCurrent number: " + x);
-            for (int i = 1; i < x; i++)
-                arrayAnswer[i] = Status.True;
-            arrayAnswer[x] = Status.False;      
-            // Remove the first number in this array
-            curArrayInfo.removeNumber(0);
-            System.out.println("\t" + printCells(arrayAnswer));
+            removeBeg(curArray, arrayAnswer, curArrayInfo);
+            solved = checkAllTrue(curArrayInfo, arrayAnswer, solved);            
+            System.out.println("\t" + printCells(arrayAnswer));   
         } // end if
-        else if (arrayAnswer[k-1] == Status.True)    // last cell is filled
+        else if (arrayAnswer[e+1-1] == Status.True)    // last cell is filled
         {
-            int x = curArray[a-1];
-            System.out.println("\tCurrent number: " + x);
-            for (int i = k-x; i < k-1; i++)
-                arrayAnswer[i] = Status.True;
-            arrayAnswer[k-x-1] = Status.False;                            
-            // Remove the last number in this array
-            curArrayInfo.removeNumber(a-1);                
-            System.out.println("\t" + printCells(arrayAnswer));
+            removeEnd(curArray, arrayAnswer, curArrayInfo);
+            solved = checkAllTrue(curArrayInfo, arrayAnswer, solved);
+            System.out.println("\t" + printCells(arrayAnswer));   
         } // end if           
         else
         {   
             int p;          // The last cell index in the previous false cluster
-            int q = -1;     // The first cell index in the next false cluster
+            int q = b-1;     // The first cell index in the next false cluster
             
             for (int s = 0; s < a; s++) // loop through numbers in the array (sections)
             {       
@@ -244,88 +259,132 @@ public class NonogramSolution
                 System.out.println("\tCurrent number: " + x);
                 
                 p = q;
-                while (p < k && arrayAnswer[p+1] == Status.False)
+                while (p < e+1 && arrayAnswer[p+1] == Status.False)
                     p++;                
                 q = p + 1;
-                while(q < k && arrayAnswer[q] == Status.Empty)
+                while(q < e+1 && arrayAnswer[q] == Status.Empty)
                     q++;
                 
                 //System.out.println("p = " + p + ", q = " + q);
-                if (p < k && q <= k) // procede only when the index is within boundary
+                if (p < e+1 && q <= e+1) // procede only when the index is within boundary
                 {
                     if (p > -1 && arrayAnswer[p] == Status.True)  // push back p by one when true
                         p--;
-                    if (q < k && arrayAnswer[q] == Status.True)  // push forward q to the next true cluster when true
+                    if (q < e+1 && arrayAnswer[q] == Status.True)  // push forward q to the next true cluster when true
                     {
                         q++;
-                        while(q < k && arrayAnswer[q] == Status.True)
+                        while(q < e+1 && arrayAnswer[q] == Status.True)
                             q++;
-                        while(q < k && arrayAnswer[q] == Status.Empty)
+                        while(q < e+1 && arrayAnswer[q] == Status.Empty)
                             q++;
                         if (s == a - 1) // When x is last number in the array
                         {   // Find the first false
-                            while(q < k && arrayAnswer[q] != Status.False)
+                            while(q < e+1 && arrayAnswer[q] != Status.False)
                                 q++;
                         } // end if
                     } // end if
                     System.out.println("\tp = " + p + ", q = " + q);                    
                     
-                    int kp = q - p - 1; // The number of empty cells between p and q                    
-                    if (x > kp/2)             
+                    int kp = q - p - 1; // The number of empty cells between p and q   
+                    int i0 =  p + 1 + kp - x;   // Beginning index of true cells
+                    
+                    // When there are more than one number left in the array but it is alreay filled in the middle of the row/column, 
+                    // (so that the code still doesn't know it is filled), and there are multiple locations for the last number to be,
+                    // we should skip this. Example is _XXOXX_XOO and array is [1,1]
+                    if ((x > kp/2) && (i0 >= b) && !(sum - numT == x && a >= 2) && !(a == 1 && numE > x))// && (numE <= x)
                     {
-                        for (int i = p + 1 + kp - x; i <= p + x; i++)
+                        for (int i = i0; i <= p + x; i++)
                             if (arrayAnswer[i] == Status.Empty)
                                 arrayAnswer[i] = Status.True;
-                        if (x > kp)
-                            for (int i = p + 1; i < q; i++)
-                                if (arrayAnswer[i] == Status.Empty)
-                                    arrayAnswer[i] = Status.False;                
-                    } // end if      
+                        
+                    } // end if 
+                    
+                    if (x > kp) // When there is less number of empty cells than the current number, make false
+                    {
+                        for (int i = p + 1; i < q; i++)
+                            if (arrayAnswer[i] == Status.Empty)
+                                arrayAnswer[i] = Status.False;                
+                    } // end if
                     
                     int firstTrue = p+1;
-                    while (firstTrue < k && arrayAnswer[firstTrue] != Status.True)
+                    while (firstTrue < e+1 && arrayAnswer[firstTrue] != Status.True)
                         firstTrue++;
-                    if (firstTrue < k && q <= k)
+                    int numTCur = 0;    // Number of True in the current section
+                    int lastTrue = firstTrue;
+                    for (int i = firstTrue; i < q; i++)
                     {
-                        int numTCur = 0;    // Number of True in the current section
-                        int lastTrue = firstTrue;
-                        for (int i = firstTrue; i < q; i++)
-                            if (arrayAnswer[i] == Status.True)
-                            {
-                                numTCur++;
-                                lastTrue = i;
-                            }
-                        int remainingT = x - numTCur;   // Remaining number of true
-                        //System.out.println("numTCur = " + numTCur + ", lastTrue = " + lastTrue + ", remainingT = " + remainingT);
-                        
-                        if (remainingT == 0)    // All true are found
+                        if (arrayAnswer[i] == Status.True)
                         {
+                            numTCur++;
+                            lastTrue = i;
+                        } // end if
+                    } // end for
+                    int remainingT = x - numTCur;   // Remaining number of true
+                     // System.out.println("\tfirstTrue = " + firstTrue +
+                     //       ", numTCur = " + numTCur + ", lastTrue = " + 
+                     //       lastTrue + ", remainingT = " + remainingT);
+                    //System.out.println("\tnumT = " + numT + ", sum = " + sum);
+                    if (firstTrue < e+1 && firstTrue <= q && q <= e+1)
+                    {                        
+                        if (remainingT == 0 && numT == sum)    // All true are found
+                        {
+                            System.out.println("\tSolution is found for the array; Remaining number of True == 0");
                             if (arrayAnswer[firstTrue-1] == Status.Empty)
                                 arrayAnswer[firstTrue-1] = Status.False;
+                            solved = true;
                         }
                         else    // Make cells in this section that are farther than remainingT false
-                        {     
-                            //System.out.println("Code proceeded to remainingT != 0");    
-                            if (p == -1 || arrayAnswer[p] == Status.False)
-                                for (int i = p+1; i < firstTrue - remainingT-1;i++)
-                                    arrayAnswer[i] = Status.False;
-                            //System.out.println("q==k?" + (q==k));
-                            //System.out.println("q = " + q + ", k = " + k);
-                            if (q == k || arrayAnswer[q] == Status.False)
+                        {                               
+                            if (a < 2)  // when there's only one number in the array
                             {
-                                //System.out.println("Code proceeded to q == k");
-                                for (int i = lastTrue + remainingT + 1; i < q; i++)
-                                    arrayAnswer[i] = Status.False;    
+                                //System.out.println("Code proceeded to remainingT != 0");    
+                                if (p == b-1 || arrayAnswer[p] == Status.False)
+                                    for (int i = p+1; i < firstTrue - remainingT;i++)
+                                        arrayAnswer[i] = Status.False;
+                                //System.out.println("q==ke?" + (q==ke));
+                                //System.out.println("q = " + q + ", ke = " + ke);
+                                if (q == e+1 || arrayAnswer[q] == Status.False)                                
+                                    for (int i = lastTrue + remainingT + 1; i < q; i++)
+                                        arrayAnswer[i] = Status.False;                                    
                             }
-                        }
-                    } // end if
-                } // end if
+                            else   // when there are more than 1 numbers in the array
+                            {                                
+                                //if (firstTrue <= x+b && s == 0) // belongs to the first number                                    
+                            } // end if
+                        } // end if
+                    }                    
+                } // end if     
+                
+                // Update number of True and Empty before proceeding to the next number
+                numT = 0;
+                numE = 0;
+                for (int i = b; i < e+1; i++)   
+                {
+                    if (arrayAnswer[i] == Status.True)
+                        numT++;
+                    if (arrayAnswer[i] == Status.Empty)
+                        numE++;
+                } // end for
+                //System.out.println("\tnumT = " + numT + ", sum = " + sum);
                 System.out.println("\t" + printCells(arrayAnswer));
             } // end for
+            solved = checkAllTrue(curArrayInfo, arrayAnswer, solved);
+            if (solved)
+                System.out.println("\t" + printCells(arrayAnswer));
         } // end if
-               
+        // Make beginning index the first non-false cell
+        b = curArrayInfo.getBeg();  // effective beginning index
+        e = curArrayInfo.getEnd();  // effective end index
+        while (b <= e && arrayAnswer[b] == Status.False)
+            b++;
+        curArrayInfo.setBeg(b);
+        // Make end index the first non-false cell from the end
+        while (e >= b && arrayAnswer[e] == Status.False)
+            e--;
+        curArrayInfo.setEnd(e);
+        
         // Update solved arrays
-        curArrayInfo.setSolved(solved);   
+        curArrayInfo.setSolved(solved);           
         return arrayAnswer;
     } // end findArraySolution
     
@@ -361,12 +420,80 @@ public class NonogramSolution
     } // end toString    
     
     
+    private void removeBeg(int[] curArray, Status[] arrayAnswer, ArrayInfo curArrayInfo)
+    {
+        System.out.println("\tRemoving the first number in the array");
+        int x = curArray[0];
+        int b = curArrayInfo.getBeg();
+        int e = curArrayInfo.getEnd();
+        System.out.println("\tCurrent number: " + x);
+        for (int i = b+1; i < b+x; i++)
+            if (arrayAnswer[i] == Status.Empty)
+                arrayAnswer[i] = Status.True;
+        int i0 = b + x;
+        if (i0 <= e)
+            arrayAnswer[i0] = Status.False;      
+        // Remove the first number in this array
+        curArrayInfo.removeFirst();
+    } // end removeBeg
+    
+    private void removeEnd(int[] curArray, Status[] arrayAnswer,  ArrayInfo curArrayInfo)
+    {
+        System.out.println("\tRemoving the last number in the array");
+        int a = curArray.length;
+        int x = curArray[a-1];
+        int b = curArrayInfo.getBeg();
+        int e = curArrayInfo.getEnd();        
+        System.out.println("\tCurrent number: " + x);
+        for (int i = e+1-x; i < e+1-1; i++)
+            if (arrayAnswer[i] == Status.Empty)
+                arrayAnswer[i] = Status.True;
+        int i0 = e+1-x-1;
+        if (i0 >= b)
+            arrayAnswer[i0] = Status.False;                            
+        // Remove the last number in this array
+        curArrayInfo.removeLast();          
+    } // end removeEnd
+    
+    private boolean checkAllTrue(ArrayInfo curArrayInfo, Status[] arrayAnswer, boolean solved)
+    {        
+        int b = curArrayInfo.getBeg();  // effective beginning index
+        int e = curArrayInfo.getEnd();  // effective end index      
+        //System.out.println("b = " + b + ", e = " + e);
+        int[] curArray = curArrayInfo.getArray(); // Row/column array        
+        int a = curArray.length;            // The number of numbers in curArray                
+        int sum = 0;                        // sum of numbers in curArray
+        for (int i = 0; i < a; i++)                    
+            sum += curArray[i];
+        int numT = 0;                       // The number of True cells         
+        for (int i = b; i < e+1; i++)
+        {
+            if (arrayAnswer[i] == Status.True)
+                numT++;                           
+        } // end for
+        
+        if (sum == numT)   // When all true cells are found
+        {            
+            System.out.println("\tSolution is found for the array; sum of numbers == number of True (else)");
+            
+            // Make all empty cells False
+            for (int i = b; i < e+1; i++) 
+                if (arrayAnswer[i] == Status.Empty)
+                    arrayAnswer[i] = Status.False;
+            solved = true;
+            //System.out.println("\t" + printCells(arrayAnswer));
+        } // end if
+        return solved;
+    } // end checkAllTrue    
+    
+    
     public class ArrayInfo
     {
         private int[] thisArray; // Array
         private boolean arraySolved; // indicates whether this array is solved
         private int gridLen;  // length of row/column
         private int num;    // The number of numbers in the array (array size)
+        private int begIdx, endIdx;   // beginning and end index
         
         public ArrayInfo(int[] array, int size)
         {
@@ -374,6 +501,8 @@ public class NonogramSolution
             arraySolved = false;
             gridLen = size;
             num = array.length;
+            begIdx = 0;
+            endIdx = size-1;
         }
         
         public int[] getArray()
@@ -386,39 +515,22 @@ public class NonogramSolution
             thisArray = newArray;
         }
         
-        // Removes the number at the index idx in the array 
-        public void removeNumber(int idx)
-        {
-            int numToRemove = thisArray[idx];
-            int[] newArray = new int[num-1]; // One size smaller
-            int count = 0;  // counter for the newArray array
-            for (int i = 0; i < num; i++)
-            {
-                if (i != idx)
-                {
-                    newArray[count] = thisArray[i];
-                    count++;
-                } // end if
-            } // end for
-            setArray(newArray); // Update the array
-            setLength(gridLen-(numToRemove+1));   // Reduce the grid length 
-            setNum(newArray.length);  // Reduce the array size
-        }        
         public void removeFirst()
         {            
             int[] newArray = new int[num-1]; // One size smaller            
             for (int i = 0; i < num-1; i++)
                 newArray[i] = thisArray[i+1];
-            setLength(gridLen-(thisArray[0] + 1));   // Reduce the grid length             
+            setBeg(begIdx + thisArray[0] + 1);            
             setArray(newArray); // Update the array            
             setNum(newArray.length);  // Reduce the array size            
         }
         public void removeLast()
         {            
             int[] newArray = new int[num-1]; // One size smaller            
-            for (int i = 0; i < num-1; i++)
-                newArray[i] = thisArray[i];
-            setLength(gridLen-(thisArray[num-1] + 1));   // Reduce the grid length             
+            System.arraycopy(thisArray, 0, newArray, 0, num-1);
+            //for (int i = 0; i < num-1; i++)
+            //    newArray[i] = thisArray[i];
+            setEnd(endIdx - (thisArray[num-1]+1));            
             setArray(newArray); // Update the array            
             setNum(newArray.length);  // Reduce the array size            
         }
@@ -451,6 +563,27 @@ public class NonogramSolution
         private void setNum(int newNum)
         {
             num = newNum;
-        }        
+        }
+        
+        public int getBeg()
+        {
+            return begIdx;
+        }
+        public void setBeg(int newB)
+        {
+            begIdx = newB;
+            setLength(getEnd() - newB + 1); // Update the effective length of grid
+        }
+        
+        public int getEnd()
+        {
+            return endIdx;
+        }
+        public void setEnd(int newE)
+        {
+            endIdx = newE;
+            setLength(newE - getBeg() + 1); // Update the effective length of grid
+        }
+        
     } // end ArrayInfo
 }
