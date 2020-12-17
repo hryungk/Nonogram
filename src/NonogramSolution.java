@@ -480,7 +480,18 @@ public class NonogramSolution
                             boolean isValidLoc = sumFromX <= e - begIdxTrue[i] + 1;
                             boolean isThereRoomForAll = numEmptyClusters >= a;
                             foundValidLaterSameTrue = foundValidLaterSameTrue || (foundLaterSameTrue && isValidLoc && isThereRoomForAll);
-                        } // end for                        
+                        } // end for   
+                        
+                        // Find a true cluster whose length is the same as x and in an earlier section.
+                        // [1,1] _ _ _ _ _ _ _ _ _ _ _ X O X _                        
+                        boolean foundValidEarlierSameTrue = false;
+                        for (int i = 0; i < numTrueClusters; i++)
+                        {
+                            boolean foundEarlierSameTrue = (begIdxTrue[i] < q && trueClusterLen[i] == x);                            
+                            boolean isValidLoc = begIdxTrue[i] + sumFromX - 1 <= e;
+                            boolean isThereRoomForAll = numEmptyClusters >= a;
+                            foundValidEarlierSameTrue = foundValidEarlierSameTrue || (foundEarlierSameTrue && isValidLoc && isThereRoomForAll);
+                        } // end for 
 
                         // Find an empty cluster whose length is greather than or equal to x and in an earlier section.
                         // Also, the last index of the previous section should be larger than sumToX
@@ -808,7 +819,7 @@ public class NonogramSolution
                         // X O X _ X _ X O O _ _ _ X _ _ 
                         boolean canPreviousNumFit = (s > 0 && curArray[s-1] <= kp && curArray[s-1] + x <= e - p - 1);
                         boolean canNextNumFit = (s < a-1 && curArray[s+1] <= kp && b+x+curArray[s+1]+1 < q);
-                        if (!solved && (x > kp || (a-1 == s && foundX)) && !canPreviousNumFit&& !canNextNumFit // || numT>getSumToX(s, curArrayInfo, 0))
+                        if (!solved && (x > kp || (a-1 == s && foundX && !foundValidEarlierSameTrue)) && !canPreviousNumFit&& !canNextNumFit // || numT>getSumToX(s, curArrayInfo, 0))
                             && (closedWithFalse(p, q, k, arrayAnswer))) 
                         {
                             System.out.println("\t\tMake this section false");
@@ -825,6 +836,7 @@ public class NonogramSolution
                         {
                             solved = makeFarCellsFalse(x, p, q, s, k, curArrayInfo, numT, sum, 
                                                        solved, arrayAnswer);
+                            foundX = isNumberLocated(s, k, arrayAnswer,curArrayInfo);
                             /* Check whether this array is solved. */
                             solved = checkAllTrue(curArrayInfo, arrayAnswer, solved);
                         } // end if
@@ -834,8 +846,8 @@ public class NonogramSolution
                         // e.g., [1,2] _ _ _ _ _ O O _ _ _ --> _ _ _ _ X O O X _ _                               
                         if (!solved)
                         {
-                            curArrayInfo = makeFalseAround(s, p, q, k, arrayAnswer, 
-                                                           curArrayInfo);
+                            curArrayInfo = makeFalseAround(s, p, q, k, foundValidLaterSameTrue,
+                                                           foundX, arrayAnswer, curArrayInfo);
                             /* Check whether this array is solved. */
                             solved = checkAllTrue(curArrayInfo, arrayAnswer, solved);
                         } // end if                           
@@ -1263,7 +1275,7 @@ public class NonogramSolution
     
     // If there is a true cluster whose length is maximum of the numbers, make false around it
     // e.g., [1,2] _ _ _ _ _ O O _ _ _ --> _ _ _ _ X O O X _ _     
-    private ArrayInfo makeFalseAround(int s, int p, int q, int k,
+    private ArrayInfo makeFalseAround(int s, int p, int q, int k, boolean foundValidLaterSameTrue, boolean foundX,
                                 Status[] arrayAnswer, ArrayInfo curArrayInfo)
     {        
         int a = curArrayInfo.getNum();
@@ -1385,14 +1397,13 @@ public class NonogramSolution
             {
                 boolean doSumFromXm1FitLater = doLaterXsFit(s-2, locCurTrue-1, curArrayInfo, arrayAnswer);
                 thisTrueBelongsToX = thisTrueBelongsToX && !doSumFromXm1FitLater;
-            }
-            
+            } // end if            
             
             if (!overlap && // [1, 7] _ _ _ _ _ O _ _ O _ _ _ _ _ _ --> Don't know  (overlap)    
                 (curArrayInfo.isMax(lenCurTrue) || 
-                (lenCurTrue == x && numTrueClusters == a) || // [4,1,3] O O O O _ O _ O O O _ _ _ _ _ [4,1,3] _ _ _ _ _ O O O O _ O _ O O O
+                (lenCurTrue == x && numTrueClusters == a && !(foundValidLaterSameTrue)) || // [4,1,3] O O O O _ O _ O O O _ _ _ _ _ [4,1,3] _ _ _ _ _ O O O O _ O _ O O O // [2,1] X X X X X X _ O _ X X X X O X --> don't X around first O
                 (lenCurTrue == x && s == a-1 && locCurTrue > sum && endCurTrue > e - (x + 1)) || 
-                (lenCurTrue == x && foundLastTrueClusterLater && !thisTrueMightBelongToLast) || 
+                (lenCurTrue == x && foundLastTrueClusterLater && !thisTrueMightBelongToLast && !foundX) || // [2,1] X X X X X X _ O _ X X X X O X --> don't X around first O
                 (lenCurTrue == x && (endCurTrue + sumFromX >= e || q == e + 1) && !isAbsMin && (thisTrueBelongsToX)) || // && !isBigForTwo inside // [4,2,2]_ _ _ _ _ _ _ _ O O _ _ _ _ _ --> _ _ _ _ _ _ _ X O O X _ _ _ _
                 (lenCurTrue == x && s == 0 && p == b + 1 && !doEarlierXsFit(s+1, locCurTrue-1, curArrayInfo, arrayAnswer)))) // [1,2,1] X X _ O _ _ _ _ _ _ _ _ _ X X --> X X X O X _ _ _ _ _ _ _ _ X X
                 // [4,2,2]_ _ _ _ _ _ _ _ O O _ _ _ _ _ --> _ _ _ _ _ _ _ X O O X _ _ _ _
@@ -1410,6 +1421,7 @@ public class NonogramSolution
                     arrayAnswer[locCurTrue-1] = Status.False;
                 if (endCurTrue+1 <= e)  // Make false right after the true cluster
                     arrayAnswer[endCurTrue+1] = Status.False;
+                System.out.println("\t\t" + printCells(arrayAnswer)); 
                 // when first number in the array, make false to the beginning
                 if (curArrayInfo.indexOf(lenCurTrue) == 0 && s == 0 && (kp < x))
                 {
@@ -1422,6 +1434,7 @@ public class NonogramSolution
                     } // end while                                
                     curArrayInfo.setBeg(locCurTrue);    // Update beginning to the locCurTrue
                     finishFirstNumber(curArray, arrayAnswer, curArrayInfo);
+                    System.out.println("\t\t" + printCells(arrayAnswer));
                 } // end if
                 // when last number in the array, make false to the end
                 else if (curArrayInfo.indexOf(lenCurTrue) == a-1)     
@@ -1435,8 +1448,8 @@ public class NonogramSolution
                     } // end while                                
                     curArrayInfo.setEnd(endCurTrue);    // Update end to the last true
                     finishLastNumber(curArray, arrayAnswer, curArrayInfo);
-                } // end if
-                System.out.println("\t\t" + printCells(arrayAnswer)); 
+                    System.out.println("\t\t" + printCells(arrayAnswer));
+                } // end if                 
             } // end if                        
         } // end if
         return curArrayInfo;
@@ -2514,7 +2527,9 @@ public class NonogramSolution
         int[] notFalseClusterLen = notFalseArrays[1];
         int numNotFalseClusters = begIdxNotFalse.length;        
                 
-        if (numNotFalseClusters == 0 || s >= a-1)
+        if (s == a-1) // when last number, no need for checking
+            result = true;  
+        if (numNotFalseClusters == 0 && s < a-1) // when there is next number(s) and no space
             result = false;
         else
         {                        
