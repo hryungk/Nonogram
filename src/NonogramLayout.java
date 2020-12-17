@@ -10,8 +10,8 @@ import javax.swing.*;
 public class NonogramLayout 
 {
     //----------------------------------------------------------------------------
-    // Sets up a frame containing a tabbed pane. The panel on each
-    // tab demonstrates a different layout manager.
+    // Sets up a frame containing a border layout panel. The panel on each
+    // border represents row, column, and grids.
     //----------------------------------------------------------------------------
     public static void main(String[] args) throws IOException 
     {   

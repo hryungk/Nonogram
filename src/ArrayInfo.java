@@ -19,16 +19,21 @@ public class ArrayInfo
         setSum();   // Calculate summation of numbers            
     }
 
+    /** Returns the current row/column array.
+     * @return An integer array containing the row/column array.
+     */
     public int[] getArray()
     {
         return thisArray;
-    }
+    } // end getArray
 
+    // Mutator for the row/column array.
     private void setArray(int[] newArray)
     {
         thisArray = newArray;
     }
 
+    /** Removes the first number in the row/column array. */
     public void removeFirstInArray()
     {            
         int[] newArray = new int[num-1]; // One size smaller            
@@ -42,6 +47,8 @@ public class ArrayInfo
 
         System.out.println("\t\tb = " + getBeg());
     }
+    
+    /** Removes the last number in the row/column array. */
     public void removeLastInArray()
     {            
         int[] newArray = new int[num-1]; // One size smaller            
@@ -134,62 +141,85 @@ public class ArrayInfo
     } // end sumArray
 
     /** Checks whether the array is solved.
-     * @return A boolean true if the array is solved. 
+     * @return A Boolean true if the array is solved. 
      */
     public boolean isSolved()
     {
         return arraySolved;
     }
 
+    /** Sets the current array solved or not. 
+     * @param TF A Boolean to set the current array. True if solved, false otherwise.
+     */
     public void setSolved(boolean TF)
     {
         arraySolved = TF;
     }
 
+    /** Returns the length of the grid.
+     * @return An integer containing the length of the grid.
+     */
     public int getLength()
     {
         return gridLen;
     }
 
+    // Mutator for the grid length.
     private void setLength(int newLen)
     {
         gridLen = newLen;
     }
 
+    /** Returns the number of numbers in the row/column array.
+     * @return An integer containing the size of the row/column array.
+     */
     public int getNum()
     {
         return num;
     }        
-
+    
+    // Mutator for the size of the row/column array.
     private void setNum(int newNum)
     {
         num = newNum;
     }
 
+    /** Returns the beginning index of the array answer. 
+     * @return An integer containing the effective beginning index of the array answer.
+     */
     public int getBeg()
     {
         return begIdx;
     }
+    // Mutator for the beginning index.
     public void setBeg(int newB)
     {
         begIdx = newB;
         setLength(getEnd() - newB + 1); // Update the effective length of grid
     }
 
+    /** Returns the end index of the array answer. 
+     * @return An integer containing the effective end index of the array answer.
+     */
     public int getEnd()
     {
         return endIdx;
     }
+    // Mutator for the end index.
     public void setEnd(int newE)
     {
         endIdx = newE;
         setLength(newE - getBeg() + 1); // Update the effective length of grid            
     }
 
+    /** Returns the summation of numbers in the row/column array.
+     * @return An integer containing the sum of all numbers in the row/column array.
+     */
     public int getSum()
     {
         return arraySum;
     }
+    // Mutator for sum of row/column array numbers.
     private void setSum()
     {
         arraySum = sumArrayFrom(0);

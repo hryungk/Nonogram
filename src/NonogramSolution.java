@@ -7,17 +7,17 @@
  * @author Hyunryung Kim    hryungk@gmail.com
  */
 import java.util.Arrays;
-public class NonogramSolution_v0_0 
+public class NonogramSolution 
 {   
     private final int[][] ROW_ARRAYS;          // Row arrays of the puzzle
     private final int[][] COL_ARRAYS;          // Column arrays of the puzzle   
     private final Status[][] SOLUTION;          // Answer to the puzzle
     private Status[][] answer;
     private final int m, n;             // size of row and column, respectively
-    private enum RowCol {Row, Column}   // State whether row or column    
+//    private enum RowCol {Row, Column}   // State whether row or column    
     private ArrayInfo[] row_arrays; // An array of array information objects for row arrays
     private ArrayInfo[] col_arrays; // An array of array information objects for column arrays
-    public NonogramSolution_v0_0(NonogramProblem newProblem)
+    public NonogramSolution(NonogramProblem newProblem)
     {        
         ROW_ARRAYS = newProblem.getRowArray();
         COL_ARRAYS = newProblem.getColumnArray();
@@ -116,7 +116,7 @@ public class NonogramSolution_v0_0
      * @param k The length of the row or column
      * @return The updated status of the given array
      */
-    private Status[] findArraySolution(RowCol rowcol, int idx, int k)
+    public Status[] findArraySolution(RowCol rowcol, int idx, int k)
     {   
         ArrayInfo curArrayInfo;                       
         Status[] arrayAnswer = new Status[k];    // The answer for the curArray  

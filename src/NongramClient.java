@@ -19,7 +19,7 @@ public class NongramClient
         int probNum = 10;
         System.out.println("<Problem " + probNum + ">");
         NonogramProblem newProblem = new NonogramProblem(probNum);        
-        NonogramSolution_v1_2 newSolution = new NonogramSolution_v1_2(newProblem);
+        NonogramSolution newSolution = new NonogramSolution(newProblem);
         
         newSolution.solve();
         System.out.println();

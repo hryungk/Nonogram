@@ -12,13 +12,13 @@ import java.util.Arrays;
 
 public class BorderPanel extends JPanel
 {
-    private final int DELAY = 2000;
+    private final int DELAY = 1000;
     private final Timer timer;
     private final GridPanel gp;
     private final Status[][] answer;          // Answer that this solver produces
     private final int m, n;             // size of row and column, respectively
     private final NonogramProblem newProblem;
-    private final NonogramSolution_v2_0 newSolution;
+    private final NonogramSolution newSolution;
     
     private final ArrayInfo[] row_arrays;     // An array of array information objects for row arrays
     private final ArrayInfo[] col_arrays;     // An array of array information objects for column arrays
@@ -34,7 +34,7 @@ public class BorderPanel extends JPanel
     {   
         // Parameters for the problem
         newProblem = new NonogramProblem(rowNum, colNum, probNum);        
-        newSolution = new NonogramSolution_v2_0(newProblem);
+        newSolution = new NonogramSolution(newProblem);
         // Load problem definition from newProblem
         PROB_ROW = newProblem.getRowArray();
         PROB_COL = newProblem.getColumnArray();        
@@ -110,7 +110,7 @@ public class BorderPanel extends JPanel
                     {           
                         System.out.println("Array " + Arrays.toString(PROB_ROW[i]) +
                             " -> " + Arrays.toString(row_arrays[i].getArray()) + ":");
-                        Status[] temp = newSolution.findArraySolution(RowCol.Row,i, m, answer,row_arrays[i]);
+                        Status[] temp = newSolution.findArraySolution(RowCol.Row,i, m);
                         System.arraycopy(temp, 0, answer[i], 0, n); 
                         //for (int j = 0; j < n; j++)
                         //    answer[i][j] = temp[j]; 
@@ -129,7 +129,7 @@ public class BorderPanel extends JPanel
                     {                        
                         System.out.println("Array " + Arrays.toString(PROB_COL[j]) +
                             "->" + Arrays.toString(col_arrays[j].getArray()) + ":");
-                        Status[] temp = newSolution.findArraySolution(RowCol.Column, j, n, answer, col_arrays[j]);
+                        Status[] temp = newSolution.findArraySolution(RowCol.Column, j, n);
                         for (int i = 0; i < n; i++)
                         {
                             answer[i][j] = temp[i]; 
@@ -149,7 +149,7 @@ public class BorderPanel extends JPanel
                         else if (answer[i][j] == Status.False)
                             gp.makeFalse(i, j);
                     }
-                loopCount++;            
+                loopCount++;       // Good until Loop 10     
             } // end if  
         } // end actionPerformed
     } // end ReboundListener            
