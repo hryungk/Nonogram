@@ -15,7 +15,7 @@ public class NonogramSolution
     private final Status[][] SOLUTION;  // Solution to the problem
     private Status[][] answer;          // Answer that this solver produces
     private final int m, n;             // size of row and column, respectively
-    private enum RowCol {Row, Column}   // State whether row or column    
+//    private enum RowCol {Row, Column}   // State whether row or column    
     private ArrayInfo[] row_arrays;     // An array of array information objects for row arrays
     private ArrayInfo[] col_arrays;     // An array of array information objects for column arrays
     
@@ -131,7 +131,7 @@ public class NonogramSolution
      * @param k The length of the row or column
      * @return The updated status of the given array
      */
-    private Status[] findArraySolution(RowCol rowcol, int idx, int k)
+    public Status[] findArraySolution(RowCol rowcol, int idx, int k)
     {   
         ArrayInfo curArrayInfo;                       
         Status[] arrayAnswer = new Status[k];    // The answer for the curArray          
@@ -245,24 +245,39 @@ public class NonogramSolution
             {
                 System.out.println("\tThere is only one number in the array.");
                 // Fill up between the first and the last true
-                int firstTrue = getFirstStatus(b-1, e, arrayAnswer, Status.True);
-                int lastTrue = getLastStatus(firstTrue, e+1, arrayAnswer, Status.True);                
-                if (b <= firstTrue && firstTrue <= e && firstTrue != lastTrue)    
+                int locCurTrue = getFirstStatus(b-1, e, arrayAnswer, Status.True);
+                int lastCurTrue = getLastStatus(locCurTrue, e+1, arrayAnswer, Status.True);                
+                if (b <= locCurTrue && locCurTrue <= e && locCurTrue != lastCurTrue)    
                 {
-                    System.out.println("\t\tFill up between first true: " + firstTrue + " and last true: " + lastTrue);
-                    for (int i = firstTrue; i <= lastTrue; i++)
+                    System.out.println("\t\tFill up between first true: " + locCurTrue + " and last true: " + lastCurTrue);
+                    for (int i = locCurTrue; i <= lastCurTrue; i++)
                         if (arrayAnswer[i] == Status.Empty)
                             arrayAnswer[i] = Status.True;
                     System.out.println("\t" + printCells(arrayAnswer)); 
-                }
+                } // end if
+                
                 /* Check whether this array is solved. */
                 solved = checkAllTrue(curArrayInfo, arrayAnswer, solved);
             } // end if
             
+            /* When there is a true cluster close to the front/end, fill up to possible cell.
+               e. g., [3, 3] _ O _ _ _ _ _ _ _ --> _ O O _ _ _ _ _ _
+               e. g., [3, 3] _ _ _ _ _ _ _ O _ --> _ _ _ _ _ _ O O _ */
+            fillUpEnd(curArrayInfo, arrayAnswer);
+            /* Check whether this array is solved. */
+            solved = checkAllTrue(curArrayInfo, arrayAnswer, solved);
+            
+            /* When there is a true cluster just away from the front/end, make first few false.
+               e. g., [3, 4] _ _ _ O O _ _ _ _ --> X X _ O O _ _ _ _ _
+               e. g., [4, 3] _ _ _ _ _ O _ _ _ --> _ _ _ _ _ O _ _ X */
+            falseEnd(curArrayInfo, arrayAnswer);
+            /* Check whether this array is solved. */
+            solved = checkAllTrue(curArrayInfo, arrayAnswer, solved);
+            
             /* Investigate by sections according to the numbers in the array. */
             if (!solved)
             {
-                int p;          // The last cell index in the previous false cluster
+                int p = -1;          // The last cell index in the previous false cluster
                 int q = b-1;     // The first cell index in the next false cluster
                 int s = 0;
                 while (s < a && !solved) // loop through numbers in the array (sections)
@@ -270,21 +285,30 @@ public class NonogramSolution
                 {       
                     int x = curArray[s];    // current number
                     System.out.println("\tCurrent number: " + x);
-
-                    // Determine current section (p, q), exclusive.  
-                    int[] pq = getpq(arrayAnswer,curArrayInfo,s,q);
-                    p = pq[0];
-                    q = pq[1];
-                    if (sum + (a - 1) == ke - 1)    // when one short
+                    
+                    // When the section ended where there are still numbers in the array to be investigated,
+                    // use the previous p and q.
+                    // Otherwise, use a new pair of p and q.
+                    if (!(a > 1 && s <= a - 1 && q == e + 1))
                     {
-                        int[][] pqList = getpqOneShort(curArrayInfo);
-                        int pOneShort = pqList[0][s];
-                        int qOneShort = pqList[1][s];
-                        
-                        p = Math.max(p, pOneShort);
-                        q = Math.min(q, qOneShort);                        
+                        // Determine current section (p, q), exclusive.  
+                        int[] pq = getpq(arrayAnswer,curArrayInfo,s,q);
+                        p = pq[0];
+                        q = pq[1];
+                        if (sum + (a - 1) == ke - 1)    // when one short
+                        {
+                            int[][] pqList = getpqOneShort(curArrayInfo);
+                            int pOneShort = pqList[0][s];
+                            int qOneShort = pqList[1][s];
+
+                            p = Math.max(p, pOneShort);
+                            q = Math.min(q, qOneShort);                        
+
+                        } // end if                        
                     } // end if
-                    System.out.println("\tp = " + p + ", q = " + q); 
+                    int kp = q - p - 1; // The number of empty cells between p and q   
+                    System.out.println("\tp = " + p + ", q = " + q + ", k' = " + kp);
+                    
 
                     // Procede only when the index is within boundary
                     if (p < e+1 && q <= e+1) 
@@ -298,22 +322,45 @@ public class NonogramSolution
                         int[][] emptyArrays = findStatusClusters(arrayAnswer, curArrayInfo, Status.Empty);
                         int[] begIdxEmpty = emptyArrays[0];
                         int[] emptyClusterLen = emptyArrays[1];
+                        int numEmptyClusters = begIdxEmpty.length;
+                        int maxEmptyLen = emptyClusterLen[0];
+                        for (int i = 0; i < numEmptyClusters; i++)
+                            maxEmptyLen = Math.max(maxEmptyLen, emptyClusterLen[i]);
 
                         // Check whether there is a true cluster that belongs this section.
                         int[] curTrue = getCurrentTrueCluster(p, q, begIdxTrue, trueClusterLen);
                         int locTrue = curTrue[0];   // Beginning index of current True cluster (first one if there are multiple, -1 if none)
-                        int lenTrue = curTrue[1];    // Length of current True cluster
-                        if (lenTrue != 0)
-                            System.out.println("\tCurrent True Cluster: from " + locTrue + " to " + (locTrue + lenTrue - 1));
+                        int lenCurTrue = curTrue[1];    // Length of current True cluster
+                        if (lenCurTrue != 0)
+                            System.out.println("\tCurrent True Cluster: from " + locTrue + " to " + (locTrue + lenCurTrue - 1));
                         
                         // If current true cluster is bigger than x, skip to the next number in the array
-                        if (lenTrue > x)
+                        if (lenCurTrue > x && s < a-1)
                         {
                             System.out.println("\tCurrent true cluster > x; moving to the next number in the array...");
                             s++;
                             x = curArray[s];                            
                             System.out.println("\tCurrent number: " + x);
                         } // end if
+                        
+                        /* Make remaining empty cells False when x is the last. */
+                        // When x is the last number in the array and there are still 
+                        // empty clusters whose length is less than x in later sections,
+                        // make them false.
+                        if (!solved && (s == a-1) && (q < e)) 
+                        {
+                            makeLaterEmptyFalse(s, x, p, q, curArrayInfo, arrayAnswer);  
+                            // Update parameters
+                            be = updateEnds(b, e,curArrayInfo, arrayAnswer);            
+                            b = be[0]; 
+                            e = be[1];
+                            curArray = curArrayInfo.getArray(); // Row/column array        
+                            a = curArrayInfo.getNum();          // The number of numbers in curArray
+                            ke = curArrayInfo.getLength();      // Effective length of grid
+                            sum = curArrayInfo.getSum();        // sum of numbers in curArray            
+                            numT = numOfStatus(b, e, arrayAnswer, Status.True);  // The number of True cells    
+                            numE = numOfStatus(b, e, arrayAnswer, Status.Empty); // The number of Empty cells  
+                        } // end if                         
                         
                         // Find a true cluster whose length is the same as x and in a later section.
                         boolean foundLaterSameTrue = false;
@@ -322,17 +369,17 @@ public class NonogramSolution
 
                         // Find an empty cluster whose length is greather than or equal to x and in a previous section.
                         boolean foundEarlierLargerEmpty = false;
-                        for (int i = 0; i < emptyClusterLen.length; i++)
+                        for (int i = 0; i < numEmptyClusters; i++)
                             foundEarlierLargerEmpty = foundEarlierLargerEmpty || (begIdxEmpty[i] < p && emptyClusterLen[i] >= x);
 
                         // Find an empty cluster whose length is the same as x and in the current section.
                         // Or empty cluster + true cluster == x
                         boolean foundThisSameEmpty = false;
                         int ie = 0;
-                        while (!foundThisSameEmpty && ie < emptyClusterLen.length)
+                        while (!foundThisSameEmpty && ie < numEmptyClusters)
                         {
                             foundThisSameEmpty = (p < begIdxEmpty[ie] && begIdxEmpty[ie] < q  && emptyClusterLen[ie] == x);
-                            foundThisSameEmpty = foundThisSameEmpty || (lenTrue + emptyClusterLen[ie] == x);
+                            foundThisSameEmpty = foundThisSameEmpty || (lenCurTrue + emptyClusterLen[ie] == x);
                             if (!foundThisSameEmpty)
                                 ie++;
                         } // end while
@@ -341,11 +388,14 @@ public class NonogramSolution
                         // Only if the empty cluster doesn't follow a true cluster whose length is larger than x
                         // (because if that's the case, the later empty cluster doesn't belong to x)
                         boolean foundLaterLargerEmpty = false;
-                        for (int i = 0; i < emptyClusterLen.length; i++)
+                        int laterLargerEmptyLen = 0;
+                        for (int i = 0; i < numEmptyClusters; i++)
                         {
                             int curBegIdxEmpty = begIdxEmpty[i];
                             int curEmptyClusterLen = emptyClusterLen[i];
                             foundLaterLargerEmpty = foundLaterLargerEmpty || (curBegIdxEmpty > q && curEmptyClusterLen >= x);
+                            if (foundLaterLargerEmpty)
+                                laterLargerEmptyLen = curEmptyClusterLen;
                             // Check whether there is a true cluster coming before the empty cluster whose longer than x
                             // (because then x doesn't belong to this empty cluster. e.g., _ _ _ X X O O O _ _ and current number is 2)
                             int[] thisTrue = getCurrentTrueCluster(q, curBegIdxEmpty, begIdxTrue, trueClusterLen);
@@ -353,19 +403,28 @@ public class NonogramSolution
                             int thisLenTrue = thisTrue[1];    // Length of True cluster
                             if (thisLocTrue != -1)  // there exist true cluster between q and current empty cluster
                                 foundLaterLargerEmpty = foundLaterLargerEmpty && (thisLenTrue <= x);
-                        } // end for
+                        } // end for                                       
 
-                        int kp = q - p - 1; // The number of empty cells between p and q   
-                        int i0 =  p + 1 + kp - x;   // Beginning index of true cells                    
-
+                        int i0 =  p + 1 + kp - x;   // Beginning index of true cells 
+                        int sumFromX = 0;   // Summation of numbers from x to the end in the array
+                        for (int i = s; i < a; i++)
+                            sumFromX += curArray[i] + 1;
+                        sumFromX -= 1;  // last number doesn't need one space
                         /* Fill up the middle (2x-k') cells. */
                         // When there are more than one number left in the array but it is alreay filled in the middle of the row/column, 
                         // (so that the code still doesn't know it is filled), and there are multiple locations for the last number to be,
-                        // we should skip this. Example is _XXOXX_XOO and array is [1,1]
+                        // we should skip this. Example is _XXOXX_XOO and array is [1,1,2]
+                        // [2, 2] _ _ X X X X _ _ _ _ --> O O X X X X _ _ _ _
+                        // [1, 2, 1] _ _ _ X _ _ X _ _ _ --> _ _ _ X O O X _ _ _
+                        // [1, 1, 2] _ X O X X X _ O _ X --> O X O X X X _ O _ X (should be fixed P6, modify with foundLaterSameTrue)
+                        // [1, 2, 1] O X _ _ _ X _ _ _ _ --> Don't fill
+                        //  [3] _ _ _ _ _ _ X _ _ _ --> Don't fill, [1, 1, 3] _ _ _ X _ X _ _ _ X --> _ _ _ X _ X O O O X
                         if (!solved && (x > kp/2) && (kp >= x) && (i0 >= b) &&
-                            !(sum - numT == x && a >= 2) && !(kp < numE && a == 1) &&
-                            !foundLaterSameTrue && !foundEarlierLargerEmpty && 
-                            !foundLaterLargerEmpty || (q == e+1 && foundThisSameEmpty && !foundEarlierLargerEmpty))// && (s < a-1 && x != curArray[s+1]))
+                            !((sum - numT == x && a >= 2) || (kp < numE && a == 1) ||
+                            foundLaterSameTrue || //foundLaterLargerEmpty || //  || foundEarlierLargerEmpty
+                            (numEmptyClusters == a && a >= 2 && sumFromX <= laterLargerEmptyLen)|| //maxEmptyLen ) ||
+                            (numEmptyClusters == a && emptyClusterLen[s] == x && numT==x) ||
+                            (q == e+1 && foundThisSameEmpty && foundEarlierLargerEmpty && numEmptyClusters != a)))// && (s < a-1 && x != curArray[s+1]))
                         {
                             // When there is a true cluster whose length is the same as x and not in the current section, don't fill up.
                             System.out.println("\tFill up middle (2x-k') cells");
@@ -382,45 +441,16 @@ public class NonogramSolution
                         /* Make False When the section length is less than x. */
                         // When there is less number of empty cells than the current number, make false.
                         // But when there is a later section where x actually belongs, skip this part.
-                        if (!solved && x > kp && !(s > 0 && kp >= curArray[s-1])) 
+                        // Also, only when this section is defined between false cells.
+                        if (!solved && x > kp && !(s > 0 && kp >= curArray[s-1])
+                            && ((p == -1 || arrayAnswer[p] == Status.False) && (q == k || arrayAnswer[q] == Status.False))) 
                         {
                             System.out.println("\tMake this section false");
                             for (int i = p + 1; i < q; i++)
                                 if (arrayAnswer[i] == Status.Empty)
                                     arrayAnswer[i] = Status.False;         
                             System.out.println("\t" + printCells(arrayAnswer)); 
-                        } // end if     
-
-                        /* Make remaining empty cells False when x is the last. */
-                        // When x is the last number in the array and there are still 
-                        // empty clusters whose length is less than x in later sections,
-                        // make them false.
-                        if (!solved && (s == a-1) && (q < e)) 
-                        {
-                            // Check whether there is a true cluster in this section
-                            boolean foundThisTrue = (locTrue != -1);                        
-                            // Find a true cluster whose length is the same as x and in a later section.
-                            boolean foundLaterTrue = false;
-                            for (int i = 0; i < trueClusterLen.length; i++)
-                                foundLaterTrue = foundLaterTrue || (begIdxTrue[i] > q);                        
-                            // Find an empty cluster whose length is smaller than x and in the next section.
-                            boolean foundLaterSmallerEmpty = false;
-                            for (int i = 0; i < emptyClusterLen.length; i++)
-                            {
-                                int curBegIdxEmpty = begIdxEmpty[i];
-                                int curEmptyClusterLen = emptyClusterLen[i];
-                                foundLaterSmallerEmpty = (curBegIdxEmpty > q && curEmptyClusterLen < x);
-                                if ((curBegIdxEmpty > q) && !foundLaterTrue && (lenTrue <= x) &&
-                                    (foundLaterSmallerEmpty || (foundThisTrue && s > 0 && curArray[s-1] != x))) // when true cluster is found, we don't know whether x belongs to this cluster if x is the same as previous number
-                                {
-                                    System.out.println("\tMake later sections false");
-                                    for (int ii = curBegIdxEmpty; ii < curBegIdxEmpty + curEmptyClusterLen; ii++)
-                                        if (arrayAnswer[ii] == Status.Empty)
-                                            arrayAnswer[ii] = Status.False;     
-                                    System.out.println("\t" + printCells(arrayAnswer)); 
-                                } // end if                            
-                            } // end for                        
-                        } // end if   
+                        } // end if    
 
                         /* Make cells in this section that are farther than remainingT false */
                         // e.g., [3, 2] _ _ _ O _ _ X _ _ X --> X _ _ O _ _ X _ _ X
@@ -432,16 +462,18 @@ public class NonogramSolution
                             solved = checkAllTrue(curArrayInfo, arrayAnswer, solved);
                         } // end if
 
+                        
                         /* If there is a true cluster whose length is maximum of the numbers, make false around it */
                         // e.g., [1,2] _ _ _ _ _ O O _ _ _ --> _ _ _ _ X O O X _ _                                       
                         if (!solved)
                         {
-                            curArrayInfo = makeFalseAround(x, kp, p, q, arrayAnswer, 
+                            curArrayInfo = makeFalseAround(x, p, q, arrayAnswer, 
                                                            curArrayInfo);
                             /* Check whether this array is solved. */
                             solved = checkAllTrue(curArrayInfo, arrayAnswer, solved);
-                        } // end if
-
+                        } // end if   
+                        
+                        
                         /* If the boundary is false and end is true, fill up the section with the current x. */
                         // When p is False and p+1 is True
                         // e.g., [2, 3] X _ _ _ _ X O _ _ _ 
@@ -449,7 +481,7 @@ public class NonogramSolution
                         // e.g., [1, 2] X _ _ _ _ X O _ _ _ 
                         // e.g., [2, 1] X _ _ _ _ X O _ _ _ 
                         // e.g., [1, 1, 2] _ _ _ O _ X O _ _ X 
-                        if (!solved && (p == -1 || arrayAnswer[p] == Status.False) && arrayAnswer[p+1] == Status.True && (x != lenTrue)) 
+                        if (!solved && (p == -1 || arrayAnswer[p] == Status.False) && arrayAnswer[p+1] == Status.True && (x != lenCurTrue)) 
                         {
                             System.out.println("\tp is false and p+1 is true");
                             for (int i = p+1; i <= p+x; i++)  // Fill up from left
@@ -463,13 +495,13 @@ public class NonogramSolution
                             System.out.println("\t" + printCells(arrayAnswer)); 
                             /* Check whether this array is solved. */
                             solved = checkAllTrue(curArrayInfo, arrayAnswer, solved);
-                        } // end if   
+                        }
                         // When q is False and q-1 is True
                         // e.g., [2, 3] X _ _ _ _ X _ _ _ O
                         // e.g., [2, 2] X _ _ _ _ X _ _ _ O
                         // e.g., [1, 2] X _ _ _ _ X _ _ _ O
                         // e.g., [2, 1] X _ _ _ _ X _ _ _ O
-                        if (!solved && (q == k || arrayAnswer[q] == Status.False) && arrayAnswer[q-1] == Status.True && (x != lenTrue))
+                        else if (!solved && (q == k || arrayAnswer[q] == Status.False) && arrayAnswer[q-1] == Status.True && (x != lenCurTrue))
                         {
                             System.out.println("\tq is false and q-1 is true");
                             for (int i = q-1; i >= q-x; i--)  // Fill up from right
@@ -689,53 +721,40 @@ public class NonogramSolution
                                 int numT, int sum, boolean solved,  
                                 Status[] arrayAnswer)
     {   
-        int b = curArrayInfo.getBeg();
-        int e = curArrayInfo.getEnd();
-        int a = curArrayInfo.getNum();
-        int firstTrue = getFirstStatus(p, e, arrayAnswer, Status.True);
+        //int b = curArrayInfo.getBeg();
+        //int e = curArrayInfo.getEnd();
+        //int a = curArrayInfo.getNum();
         
-        int numTCur = 0;    // Number of True in the current section
-        int lastTrue = firstTrue;
-        for (int i = firstTrue; i < q; i++)
-        {
-            if (arrayAnswer[i] == Status.True)
-            {
-                numTCur++;
-                lastTrue = i;
-            } // end if
-        } // end for
-        int remainingT = x - numTCur;   // Remaining number of true
-         // System.out.println("\tfirstTrue = " + firstTrue +
-         //       ", numTCur = " + numTCur + ", lastTrue = " + 
-         //       lastTrue + ", remainingT = " + remainingT);
+        // Find True cell clusters [b, e], inclusive.
+        int[][] trueArrays = findStatusClusters(arrayAnswer, curArrayInfo, Status.True);
+        int[] begIdxTrue = trueArrays[0];
+        int[] trueClusterLen = trueArrays[1];
+
+        // Check whether there is a true cluster that belongs this section.
+        int[] curTrue = getCurrentTrueCluster(p, q, begIdxTrue, trueClusterLen);
+        int locCurTrue = curTrue[0];   // Beginning index of current True cluster (first one if there are multiple, -1 if none)
+        int lenCurTrue = curTrue[1];    // Length of current True cluster
+         
+        //int lastCurTrue = locCurTrue + lenCurTrue - 1;
+        int remainingT = x - lenCurTrue;   // Remaining number of true
+         // System.out.println("\tlocCurTrue = " + locCurTrue +
+         //       ", lenCurTrue = " + lenCurTrue + ", lastCurTrue = " + 
+         //       lastCurTrue + ", remainingT = " + remainingT);
         //System.out.println("\tnumT = " + numT + ", sum = " + sum);
-        if (firstTrue < e+1 && firstTrue <= q && q <= e+1)
+        if (locCurTrue != -1)
         {                        
             if (remainingT == 0 && numT == sum)    // All true are found
             {
                 System.out.println("\tSolution is found for the array; Remaining number of True == 0");
-                if (arrayAnswer[firstTrue-1] == Status.Empty)
-                    arrayAnswer[firstTrue-1] = Status.False;
+                if (arrayAnswer[locCurTrue-1] == Status.Empty)
+                    arrayAnswer[locCurTrue-1] = Status.False;
                 solved = true;
             }
             else    // Make cells in this section that are farther than remainingT false
-            {                               
-                if (a < 2)  // when there's only one number in the array
-                {
-                    System.out.println("\tMake far cells false.");
-                    //System.out.println("Code proceeded to remainingT != 0");    
-                    if (p == b-1 || arrayAnswer[p] == Status.False)
-                        for (int i = p+1; i < firstTrue - remainingT;i++)
-                            arrayAnswer[i] = Status.False;
-                    
-                    if (q == e+1 || arrayAnswer[q] == Status.False)                                
-                        for (int i = lastTrue + remainingT + 1; i < q; i++)
-                            arrayAnswer[i] = Status.False;                                    
-                }
-                else   // when there are more than 1 numbers in the array
-                {                                
-                    //if (firstTrue <= x+b && s == 0) // belongs to the first number                                    
-                } // end if
+            {  
+                makeFalseBetweenTrues(curArrayInfo, arrayAnswer);
+                System.out.println("\t" + printCells(arrayAnswer)); 
+                makeFalseBetweenTruesOneApart(curArrayInfo, arrayAnswer);
                 System.out.println("\t" + printCells(arrayAnswer)); 
             } // end if
         } // end if
@@ -744,14 +763,15 @@ public class NonogramSolution
     
     // If there is a true cluster whose length is maximum of the numbers, make false around it
     // e.g., [1,2] _ _ _ _ _ O O _ _ _ --> _ _ _ _ X O O X _ _ 
-    private ArrayInfo makeFalseAround(int x, int kp, int p, int q,
+    private ArrayInfo makeFalseAround(int x, int p, int q,
                                 Status[] arrayAnswer, ArrayInfo curArrayInfo)
     {        
         int a = curArrayInfo.getNum();
         int b = curArrayInfo.getBeg();
         int e = curArrayInfo.getEnd();
         int[] curArray = curArrayInfo.getArray();        
-        int firstTrue = getFirstStatus(p, e, arrayAnswer, Status.True);
+        int kp = q - p - 1; // The number of empty cells between p and q   
+        //int locCurTrue = getFirstStatus(p, e, arrayAnswer, Status.True);
         
         // Find True cell clusters [b, e], inclusive.
         int[][] trueArrays = findStatusClusters(arrayAnswer, curArrayInfo, Status.True);
@@ -765,38 +785,56 @@ public class NonogramSolution
         int s = curArrayInfo.indexOf(x);    // Index of x in the array
         int sum = curArrayInfo.sumArray(0,s-1) + s;
         
-        if (firstTrue <= e)  // when there is true cell
+        //if (locCurTrue <= e)  // when there is true cell
+        if (locCurTrue != -1)  // when there is true cell
         {
-            int it = firstTrue; // True cell iterator             
-            // Find a true cluster 
-            while (it < e && arrayAnswer[it + 1] == Status.True)
-                it++;
-            int lenT = it - firstTrue + 1;  // the length of true cluster
-            // When lenT is the largest number in the array or x == numT
+            int it = locCurTrue + lenCurTrue - 1;
+            // int it = locCurTrue; // True cell iterator; becomes the last index of true cluster
+            // // Find a true cluster 
+            // while (it < e && arrayAnswer[it + 1] == Status.True)
+            //     it++;
+            //int lenCurTrue = it - locCurTrue + 1;  // the length of true cluster
+            // When lenCurTrue is the largest number in the array or x == numT
             // Or when the number of true clusters == a && currentTrueCluster == x
-            if (curArrayInfo.isMax(lenT) || (trueClusterLen.length == a && lenCurTrue == x)
-                    || (locCurTrue > sum && lenCurTrue == x && s == a-1))  
+            // [2, 1, 1]	_ _ _ _ _ O _ _ X O should not make false around.
+            
+             // Find the last true cluster whose length is the same as or less than x and in a later section.
+            boolean foundLastTrueClusterLater = false; // there is later true cluster which belongs to the last number
+            boolean belongsToLastNum;
+            boolean foundLaterLessTrue;
+            for (int i = 0; i < trueClusterLen.length; i++)
+            {
+                int endIdx = begIdxTrue[i] + trueClusterLen[i] - 1;
+                foundLaterLessTrue = (begIdxTrue[i] > q && trueClusterLen[i] <= x);
+                belongsToLastNum = endIdx >= e - curArray[a-1];
+                foundLastTrueClusterLater = foundLastTrueClusterLater || (foundLaterLessTrue && belongsToLastNum);                
+            } // end for            
+            
+            if (curArrayInfo.isMax(lenCurTrue) || 
+                (trueClusterLen.length == a && lenCurTrue == x) || 
+                (lenCurTrue == x && s == a-1 && locCurTrue > sum && it > e - (x + 1)) || 
+                (lenCurTrue == x && foundLastTrueClusterLater))
             {
                 System.out.println("\tMake false around true cells.");
-                if (firstTrue-1 >= b)   // Make false right before the true cluster
-                    arrayAnswer[firstTrue-1] = Status.False;
+                if (locCurTrue-1 >= b)   // Make false right before the true cluster
+                    arrayAnswer[locCurTrue-1] = Status.False;
                 if (it+1 <= e)  // Make false right after the true cluster
                     arrayAnswer[it+1] = Status.False;
                 // when first number in the array, make false to the beginning
-                if (curArrayInfo.indexOf(lenT) == 0 && (kp < x))
+                if (curArrayInfo.indexOf(lenCurTrue) == 0 && (kp < x))
                 {
                     System.out.println("\t\tFisrt number in the array, make false to the beginning");
-                    int iFalse = firstTrue - 2;    // False iterator
+                    int iFalse = locCurTrue - 2;    // False iterator
                     while (iFalse >= b)
                     {
                         arrayAnswer[iFalse] = Status.False;
                         iFalse--;
                     } // end while                                
-                    curArrayInfo.setBeg(firstTrue);    // Update beginning to the firstTrue
+                    curArrayInfo.setBeg(locCurTrue);    // Update beginning to the locCurTrue
                     finishFirstNumber(curArray, arrayAnswer, curArrayInfo);
                 } // end if
                 // when last number in the array, make false to the end
-                else if (curArrayInfo.indexOf(lenT) == a-1)     
+                else if (curArrayInfo.indexOf(lenCurTrue) == a-1)     
                 {
                     System.out.println("\t\tLast number in the array, make false to the end");
                     int iFalse = it + 2;    // False iterator
@@ -864,19 +902,19 @@ public class NonogramSolution
         ArrayList<Integer> begStatusIdx_temp = new ArrayList<>();
         ArrayList<Integer> lenStatus_temp = new ArrayList<>();        
         
-        int firstTrue, lastTrue, lenT;
+        int locCurTrue, lastCurTrue, lenCurTrue;
         int i = b;
         while (i <= e)
         {
-            firstTrue = getFirstStatus(i - 1, e, arrayAnswer, stat);
-            lastTrue = getLastStatusCluster(firstTrue, e, arrayAnswer, stat);            
-            lenT = lastTrue - firstTrue + 1;
-            if (lenT > 0)
+            locCurTrue = getFirstStatus(i - 1, e, arrayAnswer, stat);
+            lastCurTrue = getLastStatusCluster(locCurTrue, e, arrayAnswer, stat);            
+            lenCurTrue = lastCurTrue - locCurTrue + 1;
+            if (lenCurTrue > 0)
             {
-                begStatusIdx_temp.add(firstTrue);
-                lenStatus_temp.add(lenT);
+                begStatusIdx_temp.add(locCurTrue);
+                lenStatus_temp.add(lenCurTrue);
             } // end if
-            i = lastTrue + 1;
+            i = lastCurTrue + 1;
         } // end while
         int arrayLen = begStatusIdx_temp.size();
         int[] begStatusIdx = new int[arrayLen];
@@ -895,7 +933,7 @@ public class NonogramSolution
     private int[] getCurrentTrueCluster(int p, int q, int[] begIdxTrue, int[] trueClusterLen)
     {
         int locTrue = -1;   // Beginning index of True cluster (first one if there are multiple, -1 if none)
-        int lenTrue = 0;    // Length of True cluster
+        int lenCurTrue = 0;    // Length of True cluster
         int i = 0;
         boolean foundTrueCluster = false;
         while (i < trueClusterLen.length && !foundTrueCluster)                    
@@ -904,12 +942,12 @@ public class NonogramSolution
             if (foundTrueCluster)
             {
                 locTrue = begIdxTrue[i];
-                lenTrue = trueClusterLen[i];
+                lenCurTrue = trueClusterLen[i];
             } 
             else
                 i++;
         } // end for
-        int[] result = {locTrue, lenTrue};
+        int[] result = {locTrue, lenCurTrue};
         return result;
     } // end getCurrentTrueCluster
     
@@ -1020,6 +1058,334 @@ public class NonogramSolution
         int[][] pq = {pList, qList};
         return pq;
     }// end fillUpWhenOneShort
+    
+    /* Make remaining empty cells False when x is the last. */
+    // When x is the last number in the array and there are still 
+    // empty clusters whose length is less than x in later sections,
+    // make them false.
+    private void makeLaterEmptyFalse(int s, int x, int p, int q, ArrayInfo curArrayInfo, Status[] arrayAnswer)
+    {            
+        int[] curArray = curArrayInfo.getArray();
+        
+        // Find True cell clusters [b, e], inclusive.
+        int[][] trueArrays = findStatusClusters(arrayAnswer, curArrayInfo, Status.True);
+        int[] begIdxTrue = trueArrays[0];
+        int[] trueClusterLen = trueArrays[1];
+
+        // Find Empty cell clusters [b, e], inclusive.
+        int[][] emptyArrays = findStatusClusters(arrayAnswer, curArrayInfo, Status.Empty);
+        int[] begIdxEmpty = emptyArrays[0];
+        int[] emptyClusterLen = emptyArrays[1];
+
+        // Check whether there is a true cluster that belongs this section.
+        int[] curTrue = getCurrentTrueCluster(p, q, begIdxTrue, trueClusterLen);
+        int locTrue = curTrue[0];   // Beginning index of current True cluster (first one if there are multiple, -1 if none)
+        int lenCurTrue = curTrue[1];    // Length of current True cluster
+        
+        // Check whether there is a true cluster in this section
+        boolean foundThisTrue = (locTrue != -1);                        
+        // Find a true cluster whose length is the same as x and in a later section.
+        boolean foundLaterTrue = false;
+        for (int i = 0; i < trueClusterLen.length; i++)
+            foundLaterTrue = foundLaterTrue || (begIdxTrue[i] > q);                        
+        // Find an empty cluster whose length is smaller than x and in the next section.
+        boolean foundLaterSmallerEmpty = false;
+        for (int i = 0; i < emptyClusterLen.length; i++)
+        {
+            int curBegIdxEmpty = begIdxEmpty[i];
+            int curEmptyClusterLen = emptyClusterLen[i];
+            foundLaterSmallerEmpty = (curBegIdxEmpty > q && curEmptyClusterLen < x);
+            if ((curBegIdxEmpty > q) && !foundLaterTrue && (lenCurTrue <= x) &&
+                (foundLaterSmallerEmpty || (foundThisTrue && s > 0 && curArray[s-1] != x))) // when true cluster is found, we don't know whether x belongs to this cluster if x is the same as previous number
+            {
+                System.out.println("\tMake later sections false");
+                for (int ii = curBegIdxEmpty; ii < curBegIdxEmpty + curEmptyClusterLen; ii++)
+                    if (arrayAnswer[ii] == Status.Empty)
+                        arrayAnswer[ii] = Status.False;     
+                System.out.println("\t" + printCells(arrayAnswer)); 
+            } // end if                            
+        } // end for 
+    } // end makeLaterEmptyFalse
+    
+    private void makeFalseBetweenTrues(ArrayInfo curArrayInfo, Status[] arrayAnswer)
+    {       
+        int b = curArrayInfo.getBeg();
+        int e = curArrayInfo.getEnd();
+        int a = curArrayInfo.getNum();
+        int[] curArray = curArrayInfo.getArray();
+        
+        // Find True cell clusters [b, e], inclusive.
+        int[][] trueArrays = findStatusClusters(arrayAnswer, curArrayInfo, Status.True);
+        int[] begIdxTrue = trueArrays[0];
+        int[] trueClusterLen = trueArrays[1];        
+        int trueArrayLen = begIdxTrue.length;
+        int[] endIdxTrue = new int[trueArrayLen];
+        for (int i = 0 ;i < trueArrayLen; i++)
+        {
+            endIdxTrue[i] = begIdxTrue[i] + trueClusterLen[i] - 1;
+        }
+        int x; // current number
+        // When the number of true clusters is same as number of numbers in array
+        // And only when there are multiple numbers (single number is dealt in makeFarCellsFalse)        
+        if (trueArrayLen == a) 
+        {   
+            int[] idxBeg = new int[a];  // An array of beginning index of each number's possible range
+            int[] idxEnd = new int[a]; // An array of end index of each number's possible range            
+            for (int i = 0; i < a; i++) // Find beginning & end index of possible true range
+            {
+                x = curArray[i];  // current number
+                int curTrueBeg = begIdxTrue[i]; // Beginning index of current True cluster (first one if there are multiple, -1 if none)
+                int curTrueLen = trueClusterLen[i]; // Length of current True cluster
+                int curTrueEnd = endIdxTrue[i]; // Last index of current True cluster 
+                int remainingT = x - curTrueLen; // Remaining number of true
+
+                idxBeg[i] = Math.max(b,curTrueBeg - remainingT);
+                idxEnd[i] = Math.min(e,curTrueEnd + remainingT);                
+            } // end for
+            System.out.println("\tMake false between true clusters.");
+            // Section 1: 
+            x = curArray[0];  // current number    
+            System.out.println("\t\tCurrent number: " + x);
+            // Make false around possible true range
+            for (int i = b; i < idxBeg[0]; i++)   // Make false before the range (only for first x)
+                arrayAnswer[i] = Status.False;
+            if (a > 1)
+            {
+                for (int i = idxEnd[0]+1; i < idxBeg[1]; i++)   // Make false after the range
+                    arrayAnswer[i] = Status.False;
+                System.out.println("\t" + printCells(arrayAnswer)); 
+
+                if (a > 2)  // When there 3 or more, consider middle sections
+                {                    
+                    for (int s = 1; s < a-1; s++) // loop through numbers in the array (sections)
+                    {   // Section s:               
+                        x = curArray[s];    // current number         
+                        System.out.println("\t\tCurrent number: " + x);
+                        for (int i = idxEnd[s]+1; i < idxBeg[s+1]; i++) // Make false after the range
+                            arrayAnswer[i] = Status.False;                      
+                        System.out.println("\t" + printCells(arrayAnswer));                     
+                    } // end for
+                } // end if
+            } // end if
+            // Last section: 
+            x = curArray[a-1];            
+            System.out.println("\t\tCurrent number: " + x);
+            for (int i = idxEnd[a-1]+1; i < e+1; i++) // Make false after the range
+                arrayAnswer[i] = Status.False;              
+            System.out.println("\t" + printCells(arrayAnswer));             
+        }
+        else    // when number of true cluster != number of numbers in array
+        {
+            // Find the longest true cluster            
+            int longestTrueBeg = begIdxTrue[0]; // Beginning index of longest True cluster (first one if there are multiple, -1 if none)
+            int longestTrueLen = trueClusterLen[0]; // Length of longest True cluster
+            for (int i = 0; i < trueArrayLen; i++)
+            {
+                if (longestTrueLen < trueClusterLen[i])
+                {
+                    longestTrueBeg = begIdxTrue[i];
+                    longestTrueLen = trueClusterLen[i];
+                } // end if
+            } // end for            
+            int longestTrueEnd = longestTrueBeg + longestTrueLen - 1; // Last index of current True cluster
+            
+            // Find largest number except first and last in the array, respectively. 
+            int largestExceptLast = curArray[0];
+            int largestExceptFirst = curArray[a-1];
+            for (int i = 0; i < a-1; i++)
+            {
+                largestExceptLast = Math.max(largestExceptLast,curArray[i]);
+                largestExceptFirst = Math.max(largestExceptFirst, curArray[a-1-i]);
+            } // end for
+            
+            // When the longest true cluster is bigger than any number in the array except the last,
+            // make false to the end
+            if (longestTrueLen > largestExceptLast && largestExceptLast < curArray[a-1])
+            {   
+                x = curArray[a-1];            
+                int remainingT = x - longestTrueLen; // Remaining number of true
+                int idxEnd = Math.min(e,longestTrueEnd + remainingT);
+                System.out.println("\t\tCurrent number: " + x);
+                System.out.println("\tMake false to the end.");
+                for (int i = idxEnd+1; i < e+1; i++) // Make false after the range                                    
+                    arrayAnswer[i] = Status.False;    
+                
+                System.out.println("\t" + printCells(arrayAnswer)); 
+                // Make false around second largest true cluster
+                // e. g.,  _ O _ _ _ O O O O _ -> X O X _ _ O O O O _ 
+                if (trueArrayLen > 1)
+                {
+                    for (int i = 0; i < trueArrayLen-1; i++)
+                    {
+                        if (trueClusterLen[i] == largestExceptLast)
+                        {                            
+                            if (begIdxTrue[i]-1 >= b)   // Make false right before the true cluster
+                            {
+                                System.out.println("\tMake false around true cluster.");
+                                arrayAnswer[begIdxTrue[i]-1] = Status.False;
+                            }
+                            if (endIdxTrue[i]+1 <= e)  // Make false right after the true cluster
+                                arrayAnswer[endIdxTrue[i]+1] = Status.False;
+                            System.out.println("\t" + printCells(arrayAnswer)); 
+                        } // end if
+                    } // end for
+                } // end if
+            } // end if
+            // When the longest true cluster is bigger than any number in the array except the first,
+            // hence belongs to the first number, make false to the front
+            if (longestTrueLen > largestExceptFirst && largestExceptFirst < curArray[0])
+            {                
+                x = curArray[0];  // current number    
+                int remainingT = x - longestTrueLen; // Remaining number of true
+                int idxBeg = Math.max(b,longestTrueBeg - remainingT);
+                System.out.println("\t\tCurrent number: " + x);
+                // Make false around possible true range
+                System.out.println("\tMake false to the front.");
+                for (int i = b; i < idxBeg; i++)   // Make false before the range (only for first x)    
+                    arrayAnswer[i] = Status.False;                                    
+                System.out.println("\t" + printCells(arrayAnswer)); 
+                
+                // Make false around second largest true cluster
+                // e. g., _ O O O O _ _ O _ _ -> _ O O O O _ X O X _
+                if (trueArrayLen > 1)
+                {
+                    for (int i = 1; i < trueArrayLen; i++)
+                    {
+                        if (trueClusterLen[i] == largestExceptFirst)
+                        {                            
+                            if (begIdxTrue[i]-1 >= b)   // Make false right before the true cluster
+                            {
+                                System.out.println("\tMake false around true cluster.");
+                                arrayAnswer[begIdxTrue[i]-1] = Status.False;
+                            }
+                            if (endIdxTrue[i]+1 <= e)  // Make false right after the true cluster
+                                arrayAnswer[endIdxTrue[i]+1] = Status.False;
+                            System.out.println("\t" + printCells(arrayAnswer)); 
+                        } // end if
+                    } // end for
+                } // end if
+            } // end if
+        }// end if
+    } // end makeFalseBetweenTrues
+    
+    private void makeFalseBetweenTruesOneApart(ArrayInfo curArrayInfo, Status[] arrayAnswer)
+    {           
+        int a = curArrayInfo.getNum();
+        int[] curArray = curArrayInfo.getArray();
+        int xMax = curArray[0];
+        for (int i = 0; i < a; i++)
+            xMax = Math.max(xMax, curArray[i]);
+        
+        // Find True cell clusters [b, e], inclusive.
+        int[][] trueArrays = findStatusClusters(arrayAnswer, curArrayInfo, Status.True);
+        int[] begIdxTrue = trueArrays[0];
+        int[] trueClusterLen = trueArrays[1];
+        int trueArrayLen = begIdxTrue.length;
+        int[] endIdxTrue = new int[trueArrayLen];
+        for (int i = 0; i < trueArrayLen;i++)
+            endIdxTrue[i] = begIdxTrue[i] + trueClusterLen[i] - 1;
+        
+        for (int i = 0; i < trueArrayLen-1; i++)
+        {
+            int gap = begIdxTrue[i+1] - endIdxTrue[i] - 1;    // gap between this and next true clusters
+            // When the gap is only 1 empty cell && combined length of this and 
+            // next true cluster is greather than maximum number in the array
+            if (gap == 1 && (endIdxTrue[i+1] - begIdxTrue[i] + 1> xMax))
+            {                
+                if (arrayAnswer[begIdxTrue[i+1]-1] == Status.Empty)
+                {
+                    arrayAnswer[begIdxTrue[i+1]-1] = Status.False;
+                    System.out.println("\tThe two true clusters are separate.");
+                    System.out.println("\t" + printCells(arrayAnswer)); 
+                }
+            }
+        } // end for
+    } // end makeFalseBetweenTruesOneApart
+    
+    // When there is a true cluster close to the front/end, fill up to possible cell.
+    // e. g., [3, 3] _ O _ _ _ _ _ _ _ --> _ O O _ _ _ _ _ _
+    // e. g., [3, 3] _ _ _ _ _ _ _ O _ --> _ _ _ _ _ _ O O _
+    private void fillUpEnd(ArrayInfo curArrayInfo, Status[] arrayAnswer)
+    {
+        // Find True cell clusters [b, e], inclusive.
+        int[][] trueArrays = findStatusClusters(arrayAnswer, curArrayInfo, Status.True);
+        int[] begIdxTrue = trueArrays[0];
+        int[] trueClusterLen = trueArrays[1];
+        int numTrueClusters = begIdxTrue.length;
+        
+        if (numTrueClusters > 0)  // when there is a true cluster
+        {            
+            int b = curArrayInfo.getBeg();
+            int e = curArrayInfo.getEnd();
+            int a = curArrayInfo.getNum();
+            
+            int begIdx0 = begIdxTrue[0];
+            int endIdx0 = begIdx0 + trueClusterLen[0] - 1;
+            int x0 = curArrayInfo.getArray()[0];
+            if ((trueClusterLen[0] < x0) && (endIdx0 < b + x0 - 1) && (endIdx0 + 1 < b + x0))
+            {
+                System.out.println("\tMake first few cells true.");
+                for (int i = endIdx0 + 1; i < b + x0; i++)
+                    arrayAnswer[i] = Status.True;
+                System.out.println("\t" + printCells(arrayAnswer)); 
+            } // end if
+            
+            int begIdxe = begIdxTrue[numTrueClusters-1];
+            int endIdxe = begIdxe + trueClusterLen[numTrueClusters-1] - 1;
+            int xe = curArrayInfo.getArray()[a-1];            
+            if ((trueClusterLen[numTrueClusters-1] < xe) && (begIdxe > e - xe + 1) && (begIdxe - 1 > e - xe) )
+            {
+                System.out.println("\tMake last few cells true.");
+                for (int i = begIdxe - 1; i > e - xe; i--)
+                    arrayAnswer[i] = Status.True;
+                System.out.println("\t" + printCells(arrayAnswer)); 
+            } // end if
+        } // end if
+    } // end fillUpEnd
+    
+    // When there is a true cluster just away from the front/end, make first few false.
+    // e. g., [3, 4] _ _ _ O O _ _ _ _ --> X X _ O O _ _ _ _ _
+    // e. g., [4, 3] _ _ _ _ _ O _ _ _ --> _ _ _ _ _ O _ _ X
+    private void falseEnd(ArrayInfo curArrayInfo, Status[] arrayAnswer)
+    {
+        // Find True cell clusters [b, e], inclusive.
+        int[][] trueArrays = findStatusClusters(arrayAnswer, curArrayInfo, Status.True);
+        int[] begIdxTrue = trueArrays[0];
+        int[] trueClusterLen = trueArrays[1];
+        int numTrueClusters = begIdxTrue.length;
+        
+        if (numTrueClusters > 0)  // when there is a true cluster
+        {            
+            int b = curArrayInfo.getBeg();
+            int e = curArrayInfo.getEnd();
+            int a = curArrayInfo.getNum();
+            
+            int begIdx0 = begIdxTrue[0];
+            int endIdx0 = begIdx0 + trueClusterLen[0] - 1;
+            int x0 = curArrayInfo.getArray()[0];
+            int remainingT0 = x0 - trueClusterLen[0];
+            if ((trueClusterLen[0] < x0) && (begIdx0 <= b + x0) && (b < begIdx0 - remainingT0))
+            {
+                System.out.println("\tMake first few cells false.");
+                for (int i = b; i < begIdx0 - remainingT0; i++)
+                    arrayAnswer[i] = Status.False;
+                System.out.println("\t" + printCells(arrayAnswer)); 
+            } // end if
+            
+            int begIdxe = begIdxTrue[numTrueClusters-1];
+            int endIdxe = begIdxe + trueClusterLen[numTrueClusters-1] - 1;
+            int xe = curArrayInfo.getArray()[a-1];     
+            int remainingTe = xe - trueClusterLen[numTrueClusters-1];
+            if ((trueClusterLen[numTrueClusters-1] < xe) && (endIdxe >= e - xe) && (e > endIdxe + remainingTe))
+            {
+                System.out.println("\tMake last few cells false.");
+                for (int i = e; i > endIdxe + remainingTe; i--)
+                    arrayAnswer[i] = Status.False;
+                System.out.println("\t" + printCells(arrayAnswer)); 
+            } // end if
+        } // end if
+    } // end falseEnd
+    
     
     public class ArrayInfo
     {
