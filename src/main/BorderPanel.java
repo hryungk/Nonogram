@@ -1,13 +1,14 @@
 package main;
 
 //********************************************************************************
-//  BorderPanel.java      Author: Lewis/Loftus
+//  BorderPanel.java      Author: Hyunryung Kim
 //
 //  Puts together the grids and row && column arrays.
 //********************************************************************************
 
-import main.ArrayInfo;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Graphics;
 import java.awt.event.*;
 import java.io.IOException;
 import javax.swing.*;
@@ -29,12 +30,18 @@ public class BorderPanel extends JPanel
     private final int[][] PROB_COL;     // Column arrays of the problem 
     private boolean noEmpty = false;    // true if there is no empty cells
     private int loopCount = 0;
+    
+    private boolean solved;
+    private String result;
+    private JFrame frame;
     //----------------------------------------------------------------------------
     // Sets up this panel with a button in each area of a border
     // layout to show how it affects their position, shape, and size.
     //----------------------------------------------------------------------------
-    public BorderPanel(int rowNum, int colNum, int probNum) throws IOException
+    public BorderPanel(int rowNum, int colNum, int probNum, JFrame frame) throws IOException
     {   
+        this.frame = frame;
+        
         // Parameters for the problem
         newProblem = new NonogramProblem(rowNum, colNum, probNum);        
         newSolution = new NonogramSolution(newProblem);
@@ -58,35 +65,49 @@ public class BorderPanel extends JPanel
         // Set up the border panel
         setLayout(new BorderLayout());        
         setBackground(Color.white);   
-        timer = new Timer(DELAY, new ReboundListener());                
+        timer = new Timer(DELAY, new ReboundListener(this));                
         
         gp = new GridPanel(m, n);
         //gp.setBorder(BorderFactory.createLineBorder(Color.black, 1));
         //GridLayout layout = (GridLayout)gp.getLayout();
         //layout.setVgap(0);
         
-        BoxPanel row = new BoxPanel(RowCol.Row, PROB_ROW);        
-        BoxPanel column = new BoxPanel(RowCol.Column, PROB_COL);        
+        System.out.print("Row: ");
+        BoxPanel row = new BoxPanel(RowCol.Row, PROB_ROW, probNum);        
+        System.out.print("Column: ");
+        BoxPanel column = new BoxPanel(RowCol.Column, PROB_COL, probNum);        
         
         add(gp, BorderLayout.CENTER);
         add(column, BorderLayout.NORTH);
         add(row, BorderLayout.WEST);
-        timer.start();           
+        timer.start();       
     }
     
     //-----------------------------------------------------------------
     //  Draws the image in the current location.
     //-----------------------------------------------------------------
-//    public void paintComponent(Graphics page)
-//    {
-//       super.paintComponent(page);       
-//    }       
+    @Override
+    public void paintComponent(Graphics page)
+    {
+       super.paintComponent(page);     
+       
+       if (noEmpty) {
+           page.setColor(Color.red);
+           page.fillRect(10, 10, 100, 50);
+       }
+    }       
+    
     
     //*****************************************************************
     //  Represents the action listener for the timer.
     //*****************************************************************
     private class ReboundListener implements ActionListener
     {
+        JPanel panel;
+        public ReboundListener (JPanel panel) {
+            this.panel = panel;
+        }
+        
         //--------------------------------------------------------------
         //  Updates the position of the image and possibly the direction
         //  of movement whenever the timer fires an action event.
@@ -97,7 +118,21 @@ public class BorderPanel extends JPanel
             if (noEmpty)
             {
                 timer.stop();
-                System.out.println("Is the answer to the puzzle correct?: " + newSolution.isCorrect());
+                solved = newSolution.isCorrect();
+                System.out.println("Is the answer to the puzzle correct?: " + solved);
+                
+                if (solved)
+                    result = "Solved!";
+                else
+                    result = "Unable to solve";      
+                
+                int again = JOptionPane.showConfirmDialog(null, "Do Another?");                
+                if (again == JOptionPane.YES_OPTION) {
+                    frame.remove(panel);
+                    JPanel tPanel = new DropDownPanel(frame);
+                    frame.getContentPane().add(tPanel);
+                    frame.pack();
+                }
             }
             else // if (!noEmpty)    // Keep solving arrays until there is no empty cell
             {                 
@@ -155,5 +190,5 @@ public class BorderPanel extends JPanel
                 loopCount++;       // Good until Loop 10     
             } // end if  
         } // end actionPerformed
-    } // end ReboundListener            
+    } // end ReboundListener     
 } // end BorderPanel

@@ -6,7 +6,9 @@ package main;
 //  Puts together the grids and row && column arrays.
 //********************************************************************************
 
-import java.awt.*;
+
+import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.event.*;
 import javax.swing.*;
 

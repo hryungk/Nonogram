@@ -6,7 +6,10 @@ package main;
 //  Represents a grid size of M x N for a Nonogram puzzle.
 //********************************************************************************
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.GridLayout;
 import javax.swing.*;
 
 public class GridPanel_test extends JPanel

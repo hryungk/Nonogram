@@ -6,7 +6,6 @@ package main;
 //  Demonstrates the use of flow, border, grid, and box layouts.
 //********************************************************************************
 
-import main.BorderPanel;
 import java.io.IOException;
 import javax.swing.*;
 
@@ -17,17 +16,14 @@ public class NonogramLayout
     // border represents row, column, and grids.
     //----------------------------------------------------------------------------
     public static void main(String[] args) throws IOException 
-    {   
-        JFrame frame = new JFrame("Nonogram Demo");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    {                   
+        JFrame frame = new JFrame("Nonogram Demo");        
         
-        int probNum = 11;
-        int rowNum = 10;
-        int colNum = 10;
-        System.out.println("<Problem " + rowNum + " x " + colNum + " - " + probNum + ">");
-        BorderPanel panel = new BorderPanel(rowNum, colNum, probNum);
-
-        frame.getContentPane().add(panel);
+//        JPanel tPanel = new TitlePanel(frame);
+        JPanel tPanel = new DropDownPanel(frame);
+        
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.getContentPane().add(tPanel);
         frame.pack();
         frame.setVisible(true);
     }

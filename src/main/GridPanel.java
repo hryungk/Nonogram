@@ -6,7 +6,10 @@ package main;
 //  Represents a grid size of m x n for a Nonogram puzzle.
 //********************************************************************************
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.GridLayout;
 import javax.swing.*;
 
 public class GridPanel extends JPanel
@@ -45,7 +48,7 @@ public class GridPanel extends JPanel
     public void makeTrue(int i, int j)
     {
         JPanel p = gridColor[i][j];
-        p.setBackground(navyBlue());
+        p.setBackground(Colors.navyBlue);
         p.setBorder(BorderFactory.createLineBorder(Color.black, 1));
     } // end makeTrue
     
@@ -63,7 +66,7 @@ public class GridPanel extends JPanel
     private JPanel createNewCell()
     {
         JPanel p = new JPanel();
-        p.setBorder(BorderFactory.createLineBorder(gray(), 1));
+        p.setBorder(BorderFactory.createLineBorder(Colors.gray, 1));
         p.setPreferredSize(new Dimension(CELL_SIZE, CELL_SIZE));        
         p.setBackground(Color.white);           
         return p;
@@ -74,21 +77,7 @@ public class GridPanel extends JPanel
     {
         JLabel l = new JLabel("");
         l.setFont(new Font("Helvetica", Font.PLAIN, 35));           
-        l.setForeground(navyBlue());
+        l.setForeground(Colors.navyBlue);
         return l;
     } // end createnewLabel
-    
-    // Returns a navy blue color
-    private Color navyBlue()
-    {        
-        float[] HSB = Color.RGBtoHSB(51, 73, 97, null);
-        return Color.getHSBColor(HSB[0], HSB[1], HSB[2]);
-    }
-    
-    // Returns a light blue color
-    private Color gray()
-    {        
-        float[] HSB = Color.RGBtoHSB(214, 218, 228, null);
-        return Color.getHSBColor(HSB[0], HSB[1], HSB[2]);
-    }
 }

@@ -7,10 +7,14 @@ package main;
 //********************************************************************************
 
 import java.awt.*;
-import javax.swing.*;
 import javax.swing.border.*;
 import java.util.Scanner;
 import java.util.Arrays;
+import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 
 public class BoxPanel extends JPanel
 {
@@ -19,7 +23,7 @@ public class BoxPanel extends JPanel
     //----------------------------------------------------------------------------
     // Sets up this panel with row/column arrays.    
     //----------------------------------------------------------------------------
-    public BoxPanel(RowCol rc, int[][] givenArrays) 
+    public BoxPanel(RowCol rc, int[][] givenArrays, int probNum) 
     {   
         strings = int2str(givenArrays);
         setBackground(Color.white);        
@@ -30,8 +34,18 @@ public class BoxPanel extends JPanel
         else
         {
             panels = createColumn();
-            // Add an empty panel in front
-            JPanel p = new JPanel();            
+            // Add an empty panel in front            
+            JPanel p = new JPanel();   
+            p.setLayout(new BoxLayout(p,BoxLayout.Y_AXIS));
+            int aLen = givenArrays.length;
+            JLabel pLabel1 = new JLabel(Integer.toString(aLen) + " x " + aLen);
+            JLabel pLabel2 = new JLabel("Problem #" + probNum);
+            pLabel1.setFont(new Font("Calibri", Font.BOLD, 20));
+            pLabel2.setFont(new Font("Calibri", Font.BOLD, 20));
+            pLabel1.setAlignmentX(Component.CENTER_ALIGNMENT);
+            pLabel2.setAlignmentX(Component.CENTER_ALIGNMENT);
+            p.add(pLabel1);
+            p.add(pLabel2);
             p.setBackground(Color.white);
             p.setBorder(BorderFactory.createLineBorder(Color.white, 1));
             p.setPreferredSize(new Dimension(3*CELL_SIZE,3*CELL_SIZE));            
@@ -57,7 +71,7 @@ public class BoxPanel extends JPanel
             label.setFont(new Font("Calibri", Font.PLAIN, 20));
             p.add(label);            
             p.setPreferredSize(new Dimension(3*CELL_SIZE,CELL_SIZE));
-            p.setBackground(lightBlue());            
+            p.setBackground(Colors.lightBlue);            
             setColors(p);               
             panels[i] = p; 
         }         
@@ -115,23 +129,9 @@ public class BoxPanel extends JPanel
     // Sets colors for the panel
     private void setColors(JPanel p)
     {
-        p.setBackground(lightBlue());     
+        p.setBackground(Colors.lightBlue);     
         Border b1 = BorderFactory.createLineBorder(Color.white,1);
-        Border b2 = BorderFactory.createLineBorder(gray(), 1);            
+        Border b2 = BorderFactory.createLineBorder(Colors.gray, 1);            
         p.setBorder(BorderFactory.createCompoundBorder(b1, b2)); 
-    }
-    
-    // Returns a light blue color
-    private Color lightBlue()
-    {        
-        float[] HSB = Color.RGBtoHSB(234, 238, 249, null);
-        return Color.getHSBColor(HSB[0], HSB[1], HSB[2]);
-    }
-    
-    // Returns a light blue color
-    private Color gray()
-    {        
-        float[] HSB = Color.RGBtoHSB(214, 218, 228, null);
-        return Color.getHSBColor(HSB[0], HSB[1], HSB[2]);
-    }
+    }    
 } // end BoxPanel
