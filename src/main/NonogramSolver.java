@@ -9,7 +9,7 @@ package main;
 import java.io.IOException;
 import javax.swing.*;
 
-public class NonogramLayout 
+public class NonogramSolver 
 {
     //----------------------------------------------------------------------------
     // Sets up a frame containing a border layout panel. The panel on each

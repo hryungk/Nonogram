@@ -11,7 +11,7 @@ package main;
  * @author HRK
  */
 import java.io.*;
-public class NongramClient 
+public class NongramTest 
 {
     /**
      * @param args the command line arguments
