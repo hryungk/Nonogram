@@ -88,7 +88,7 @@ public class DropDownPanel extends JPanel {
             label1.setFont(new Font("Arial", Font.BOLD, 16));
             
             // Create a button.        
-            JButton gen = new JButton("Generate");
+            JButton gen = new JButton("Solve");
             gen.setForeground(Colors.navyBlue);
             gen.setMnemonic('g');
             

@@ -34,7 +34,7 @@ public class TitlePanel extends JPanel {
         this.frame = frame;
         frame.add(this);
         
-        push = new JButton("Generate");
+        push = new JButton("Solve");
         push.setForeground(Colors.navyBlue);
         push.addActionListener(new ButtonListener(this));
         
