@@ -1,0 +1,702 @@
+run:
+<Problem 10 x 10 - 1>
+Row: [2, 4, 3 3, 5 1 1, 3 1, 10, 10, 1, 3, 10]
+Column: [4 1, 4 1, 4 1, 2 2 1, 2 2 1, 2 2 1, 2 2 2, 10, 2 2 2, 2 2 1]
+=======================================================
+			Loop 1
+=======================================================
+----------------------- Row - 1 -----------------------
+Array [2] -> [2]:
+	Beginning of the array:
+	b = 0, e = 9, ke = 10
+	_ _ _ _ _ _ _ _ _ _ 
+		Fill up by general rules...
+			Current number: 2
+		_ _ _ _ _ _ _ _ _ _ 
+		There is only one number in the array.
+	Current number: 2
+	Section 1 / 1: p = -1, q = 10, k' = 10
+		For section (-1, 10):
+		_ _ _ _ _ _ _ _ _ _ 
+Array [4] -> [4]:
+	Beginning of the array:
+	b = 0, e = 9, ke = 10
+	_ _ _ _ _ _ _ _ _ _ 
+		Fill up by general rules...
+			Current number: 4
+		_ _ _ _ _ _ _ _ _ _ 
+		There is only one number in the array.
+	Current number: 4
+	Section 1 / 1: p = -1, q = 10, k' = 10
+		For section (-1, 10):
+		_ _ _ _ _ _ _ _ _ _ 
+Array [3, 3] -> [3, 3]:
+	Beginning of the array:
+	b = 0, e = 9, ke = 10
+	_ _ _ _ _ _ _ _ _ _ 
+		Fill up by general rules...
+			Current number: 3
+		_ _ _ _ _ _ _ _ _ _ 
+			Current number: 3
+		_ _ _ _ _ _ _ _ _ _ 
+	Current number: 3
+	Section 1 / 2: p = -1, q = 6, k' = 6
+		For section (-1, 6):
+		_ _ _ _ _ _ _ _ _ _ 
+	Current number: 3
+	Section 2 / 2: p = 3, q = 10, k' = 6
+		For section (3, 10):
+		_ _ _ _ _ _ _ _ _ _ 
+Array [5, 1, 1] -> [5, 1, 1]:
+	Beginning of the array:
+	b = 0, e = 9, ke = 10
+	_ _ _ _ _ _ _ _ _ _ 
+		Fill up by general rules...
+			Current number: 5
+		_ O O O O _ _ _ _ _ 
+			Current number: 1
+		_ O O O O _ _ _ _ _ 
+			Current number: 1
+		_ O O O O _ _ _ _ _ 
+	Current number: 5
+	Section 1 / 3: p = -1, q = 6, k' = 6
+		Current True Cluster: from 1 to 4
+			Current number: 5
+		Make false to the front.
+		_ O O O O _ _ _ _ _ 
+		Fill up middle (2x-k') cells
+		_ O O O O _ _ _ _ _ 
+			Current number: 5
+		Make false to the front.
+		_ O O O O _ _ _ _ _ 
+		For section (-1, 6):
+		_ O O O O _ _ _ _ _ 
+	Current number: 1
+	Section 2 / 3: p = 5, q = 8, k' = 2
+		For section (5, 8):
+		_ O O O O _ _ _ _ _ 
+	Current number: 1
+	Section 3 / 3: p = 7, q = 10, k' = 2
+		For section (7, 10):
+		_ O O O O _ _ _ _ _ 
+Array [3, 1] -> [3, 1]:
+	Beginning of the array:
+	b = 0, e = 9, ke = 10
+	_ _ _ _ _ _ _ _ _ _ 
+		Fill up by general rules...
+			Current number: 3
+		_ _ _ _ _ _ _ _ _ _ 
+			Current number: 1
+		_ _ _ _ _ _ _ _ _ _ 
+	Current number: 3
+	Section 1 / 2: p = -1, q = 8, k' = 8
+		For section (-1, 8):
+		_ _ _ _ _ _ _ _ _ _ 
+	Current number: 1
+	Section 2 / 2: p = 3, q = 10, k' = 6
+		For section (3, 10):
+		_ _ _ _ _ _ _ _ _ _ 
+Array [10] -> [10]:
+	Beginning of the array:
+	b = 0, e = 9, ke = 10
+	_ _ _ _ _ _ _ _ _ _ 
+	Solution is found for the array; sum of numbers and spaces == effective length of row/column.
+	Current number: 10
+	O O O O O O O O O O 
+Array [10] -> [10]:
+	Beginning of the array:
+	b = 0, e = 9, ke = 10
+	_ _ _ _ _ _ _ _ _ _ 
+	Solution is found for the array; sum of numbers and spaces == effective length of row/column.
+	Current number: 10
+	O O O O O O O O O O 
+Array [1] -> [1]:
+	Beginning of the array:
+	b = 0, e = 9, ke = 10
+	_ _ _ _ _ _ _ _ _ _ 
+		Fill up by general rules...
+			Current number: 1
+		_ _ _ _ _ _ _ _ _ _ 
+		There is only one number in the array.
+	Current number: 1
+	Section 1 / 1: p = -1, q = 10, k' = 10
+		For section (-1, 10):
+		_ _ _ _ _ _ _ _ _ _ 
+Array [3] -> [3]:
+	Beginning of the array:
+	b = 0, e = 9, ke = 10
+	_ _ _ _ _ _ _ _ _ _ 
+		Fill up by general rules...
+			Current number: 3
+		_ _ _ _ _ _ _ _ _ _ 
+		There is only one number in the array.
+	Current number: 3
+	Section 1 / 1: p = -1, q = 10, k' = 10
+		For section (-1, 10):
+		_ _ _ _ _ _ _ _ _ _ 
+Array [10] -> [10]:
+	Beginning of the array:
+	b = 0, e = 9, ke = 10
+	_ _ _ _ _ _ _ _ _ _ 
+	Solution is found for the array; sum of numbers and spaces == effective length of row/column.
+	Current number: 10
+	O O O O O O O O O O 
+--------------------- Column - 1 ---------------------
+Array [4, 1]->[4, 1]:
+	Beginning of the array:
+	b = 0, e = 9, ke = 10
+	_ _ _ _ _ O O _ _ O 
+		Removing the last number in the array
+			Current number: 1
+		_ _ _ _ _ O O _ X O 
+		e = 7
+	After removing ends:
+	b = 0, e = 7, ke = 8, a = 1
+		Fill up by general rules...
+			Current number: 4
+		_ _ _ _ _ O O _ X O 
+		There is only one number in the array.
+			Fill up between first true: 5 and last true: 6
+		_ _ _ _ _ O O _ X O 
+		Make last few cells true.
+		_ _ _ _ O O O _ X O 
+		Make first few cells false.
+		X X X _ O O O _ X O 
+	After removing ends:
+	b = 3, e = 7, ke = 5, a = 1
+	Current number: 4
+	Section 1 / 1: p = 2, q = 8, k' = 5
+		Current True Cluster: from 4 to 6
+		Make false between true clusters.
+			Current number: 4
+			Current number: 4
+		X X X _ O O O _ X O 
+		Fill up middle (2x-k') cells
+		X X X _ O O O _ X O 
+		Make false between true clusters.
+			Current number: 4
+			Current number: 4
+		X X X _ O O O _ X O 
+		For section (2, 8):
+		X X X _ O O O _ X O 
+Array [4, 1]->[4, 1]:
+	Beginning of the array:
+	b = 0, e = 9, ke = 10
+	_ _ _ O _ O O _ _ O 
+		Removing the last number in the array
+			Current number: 1
+		_ _ _ O _ O O _ X O 
+		e = 7
+	After removing ends:
+	b = 0, e = 7, ke = 8, a = 1
+		Fill up by general rules...
+			Current number: 4
+		_ _ _ O _ O O _ X O 
+		There is only one number in the array.
+			Fill up between first true: 3 and last true: 6
+		_ _ _ O O O O _ X O 
+	Solution is found for the array; sum of numbers == number of True (else)
+		X X X O O O O X X O 
+		Updating Ends:
+	b = 3, e = 6, ke = 4
+Array [4, 1]->[4, 1]:
+	Beginning of the array:
+	b = 0, e = 9, ke = 10
+	_ _ _ O _ O O _ _ O 
+		Removing the last number in the array
+			Current number: 1
+		_ _ _ O _ O O _ X O 
+		e = 7
+	After removing ends:
+	b = 0, e = 7, ke = 8, a = 1
+		Fill up by general rules...
+			Current number: 4
+		_ _ _ O _ O O _ X O 
+		There is only one number in the array.
+			Fill up between first true: 3 and last true: 6
+		_ _ _ O O O O _ X O 
+	Solution is found for the array; sum of numbers == number of True (else)
+		X X X O O O O X X O 
+		Updating Ends:
+	b = 3, e = 6, ke = 4
+Array [2, 2, 1]->[2, 2, 1]:
+	Beginning of the array:
+	b = 0, e = 9, ke = 10
+	_ _ _ O _ O O _ _ O 
+		Removing the last number in the array
+			Current number: 1
+		_ _ _ O _ O O _ X O 
+		e = 7
+	After removing ends:
+	b = 0, e = 7, ke = 8, a = 2
+		Fill up by general rules...
+			Current number: 2
+		_ _ _ O _ O O _ X O 
+			Current number: 2
+		_ _ _ O _ O O _ X O 
+	Current number: 2
+	Section 1 / 2: p = -1, q = 5, k' = 5
+		Current True Cluster: from 3 to 3
+		Make false between true clusters.
+			Current number: 2
+		X X _ O _ O O _ X O 
+			Current number: 2
+		X X _ O _ O O X X O 
+		The two true clusters are separate.
+		X X _ O X O O X X O 
+		Make false between true clusters.
+			Current number: 2
+		X X _ O X O O X X O 
+			Current number: 2
+		X X _ O X O O X X O 
+		For section (-1, 5):
+		X X _ O X O O X X O 
+		Removing the last number in the array
+			Current number: 2
+		X X _ O X O O X X O 
+		e = 3
+		Removing the last number in the array
+			Current number: 2
+		X X O O X O O X X O 
+		e = 0
+	After removing ends:
+	b = 2, e = 0, ke = -1
+	Solution is found for the array; sum of numbers == number of True (else)
+		X X O O X O O X X O 
+Array [2, 2, 1]->[2, 2, 1]:
+	Beginning of the array:
+	b = 0, e = 9, ke = 10
+	_ _ _ O _ O O _ _ O 
+		Removing the last number in the array
+			Current number: 1
+		_ _ _ O _ O O _ X O 
+		e = 7
+	After removing ends:
+	b = 0, e = 7, ke = 8, a = 2
+		Fill up by general rules...
+			Current number: 2
+		_ _ _ O _ O O _ X O 
+			Current number: 2
+		_ _ _ O _ O O _ X O 
+	Current number: 2
+	Section 1 / 2: p = -1, q = 5, k' = 5
+		Current True Cluster: from 3 to 3
+		Make false between true clusters.
+			Current number: 2
+		X X _ O _ O O _ X O 
+			Current number: 2
+		X X _ O _ O O X X O 
+		The two true clusters are separate.
+		X X _ O X O O X X O 
+		Make false between true clusters.
+			Current number: 2
+		X X _ O X O O X X O 
+			Current number: 2
+		X X _ O X O O X X O 
+		For section (-1, 5):
+		X X _ O X O O X X O 
+		Removing the last number in the array
+			Current number: 2
+		X X _ O X O O X X O 
+		e = 3
+		Removing the last number in the array
+			Current number: 2
+		X X O O X O O X X O 
+		e = 0
+	After removing ends:
+	b = 2, e = 0, ke = -1
+	Solution is found for the array; sum of numbers == number of True (else)
+		X X O O X O O X X O 
+Array [2, 2, 1]->[2, 2, 1]:
+	Beginning of the array:
+	b = 0, e = 9, ke = 10
+	_ _ _ _ _ O O _ _ O 
+		Removing the last number in the array
+			Current number: 1
+		_ _ _ _ _ O O _ X O 
+		e = 7
+	After removing ends:
+	b = 0, e = 7, ke = 8, a = 2
+		Fill up by general rules...
+			Current number: 2
+		_ _ _ _ _ O O _ X O 
+			Current number: 2
+		_ _ _ _ _ O O _ X O 
+	Current number: 2
+	Section 1 / 2: p = -1, q = 5, k' = 5
+		For section (-1, 5):
+		_ _ _ _ _ O O _ X O 
+	Current number: 2
+	Section 2 / 2: p = 2, q = 8, k' = 5
+		Current True Cluster: from 5 to 6
+		Make false around true cells.
+		_ _ _ _ X O O X X O 
+		For section (2, 8):
+		_ _ _ _ X O O X X O 
+		Removing the last number in the array
+			Current number: 2
+		_ _ _ _ X O O X X O 
+		e = 3
+	After removing ends:
+	b = 0, e = 3, ke = 4
+Array [2, 2, 2]->[2, 2, 2]:
+	Beginning of the array:
+	b = 0, e = 9, ke = 10
+	_ _ _ _ _ O O _ _ O 
+		Removing the last number in the array
+			Current number: 2
+		_ _ _ _ _ O O X O O 
+		e = 6
+		Removing the last number in the array
+			Current number: 2
+		_ _ _ _ X O O X O O 
+		e = 3
+	After removing ends:
+	b = 0, e = 3, ke = 4, a = 1
+		Fill up by general rules...
+			Current number: 2
+		_ _ _ _ X O O X O O 
+		There is only one number in the array.
+	Current number: 2
+	Section 1 / 1: p = -1, q = 4, k' = 4
+		For section (-1, 4):
+		_ _ _ _ X O O X O O 
+Array [10]->[10]:
+	Beginning of the array:
+	b = 0, e = 9, ke = 10
+	_ _ _ _ _ O O _ _ O 
+	Solution is found for the array; sum of numbers and spaces == effective length of row/column.
+	Current number: 10
+	O O O O O O O O O O 
+Array [2, 2, 2]->[2, 2, 2]:
+	Beginning of the array:
+	b = 0, e = 9, ke = 10
+	_ _ _ _ _ O O _ _ O 
+		Removing the last number in the array
+			Current number: 2
+		_ _ _ _ _ O O X O O 
+		e = 6
+		Removing the last number in the array
+			Current number: 2
+		_ _ _ _ X O O X O O 
+		e = 3
+	After removing ends:
+	b = 0, e = 3, ke = 4, a = 1
+		Fill up by general rules...
+			Current number: 2
+		_ _ _ _ X O O X O O 
+		There is only one number in the array.
+	Current number: 2
+	Section 1 / 1: p = -1, q = 4, k' = 4
+		For section (-1, 4):
+		_ _ _ _ X O O X O O 
+Array [2, 2, 1]->[2, 2, 1]:
+	Beginning of the array:
+	b = 0, e = 9, ke = 10
+	_ _ _ _ _ O O _ _ O 
+		Removing the last number in the array
+			Current number: 1
+		_ _ _ _ _ O O _ X O 
+		e = 7
+	After removing ends:
+	b = 0, e = 7, ke = 8, a = 2
+		Fill up by general rules...
+			Current number: 2
+		_ _ _ _ _ O O _ X O 
+			Current number: 2
+		_ _ _ _ _ O O _ X O 
+	Current number: 2
+	Section 1 / 2: p = -1, q = 5, k' = 5
+		For section (-1, 5):
+		_ _ _ _ _ O O _ X O 
+	Current number: 2
+	Section 2 / 2: p = 2, q = 8, k' = 5
+		Current True Cluster: from 5 to 6
+		Make false around true cells.
+		_ _ _ _ X O O X X O 
+		For section (2, 8):
+		_ _ _ _ X O O X X O 
+		Removing the last number in the array
+			Current number: 2
+		_ _ _ _ X O O X X O 
+		e = 3
+	After removing ends:
+	b = 0, e = 3, ke = 4
+=======================================================
+			Loop 2
+=======================================================
+----------------------- Row - 2 -----------------------
+Array [2] -> [2]:
+	Beginning of the array:
+	b = 5, e = 9, ke = 5
+	X X X X X _ _ O _ _ 
+		Fill up by general rules...
+			Current number: 2
+		X X X X X _ _ O _ _ 
+		There is only one number in the array.
+		Make first few cells false.
+		X X X X X X _ O _ _ 
+		Make last few cells false.
+		X X X X X X _ O _ X 
+	After removing ends:
+	b = 6, e = 8, ke = 3, a = 1
+	Current number: 2
+	Section 1 / 1: p = 5, q = 9, k' = 3
+		Current True Cluster: from 7 to 7
+		Make false between true clusters.
+			Current number: 2
+			Current number: 2
+		X X X X X X _ O _ X 
+		Fill up middle (2x-k') cells
+		X X X X X X _ O _ X 
+		Make false between true clusters.
+			Current number: 2
+			Current number: 2
+		X X X X X X _ O _ X 
+		For section (5, 9):
+		X X X X X X _ O _ X 
+Array [4] -> [4]:
+	Beginning of the array:
+	b = 5, e = 9, ke = 5
+	X X X X X _ _ O _ _ 
+		Fill up by general rules...
+			Current number: 4
+		X X X X X _ O O O _ 
+		There is only one number in the array.
+			Fill up between first true: 6 and last true: 8
+		X X X X X _ O O O _ 
+	Current number: 4
+	Section 1 / 1: p = 4, q = 10, k' = 5
+		Current True Cluster: from 6 to 8
+		Make false between true clusters.
+			Current number: 4
+			Current number: 4
+		X X X X X _ O O O _ 
+		Fill up middle (2x-k') cells
+		X X X X X _ O O O _ 
+		Make false between true clusters.
+			Current number: 4
+			Current number: 4
+		X X X X X _ O O O _ 
+		For section (4, 10):
+		X X X X X _ O O O _ 
+Array [3, 3] -> [3, 3]:
+	Beginning of the array:
+	b = 3, e = 9, ke = 7
+	X X X O O _ _ O _ _ 
+	Solution is found for the array; sum of numbers and spaces == effective length of row/column.
+	Current number: 3
+	Current number: 3
+	X X X O O O X O O O 
+Array [5, 1, 1] -> [5, 1, 1]:
+	Beginning of the array:
+	b = 0, e = 9, ke = 10
+	_ O O O O _ _ O _ _ 
+		Fill up by general rules...
+			Current number: 5
+		_ O O O O _ _ O _ _ 
+			Current number: 1
+		_ O O O O _ _ O _ _ 
+			Current number: 1
+		_ O O O O _ _ O _ _ 
+	Current number: 5
+	Section 1 / 3: p = -1, q = 6, k' = 6
+		Current True Cluster: from 1 to 4
+			Current number: 5
+		Make false to the front.
+		_ O O O O _ _ O _ _ 
+		Make false around true cluster.
+		_ O O O O _ X O X _ 
+		Fill up middle (2x-k') cells
+		_ O O O O _ X O X _ 
+			Current number: 5
+		Make false to the front.
+		_ O O O O _ X O X _ 
+		Make false around true cluster.
+		_ O O O O _ X O X _ 
+		For section (-1, 6):
+		_ O O O O _ X O X _ 
+	Current number: 1
+	Section 2 / 3: p = 6, q = 8, k' = 1
+		Current True Cluster: from 7 to 7
+			Current number: 5
+		Make false to the front.
+		_ O O O O _ X O X _ 
+		Make false around true cluster.
+		_ O O O O _ X O X _ 
+		Make far cells false.
+		_ O O O O _ X O X _ 
+			Current number: 5
+		Make false to the front.
+		_ O O O O _ X O X _ 
+		Make false around true cluster.
+		_ O O O O _ X O X _ 
+		Make far cells false.
+		_ O O O O _ X O X _ 
+		Make false around true cells.
+		_ O O O O _ X O X _ 
+		p is false and p+1 is true
+		_ O O O O _ X O X _ 
+		For section (6, 8):
+		_ O O O O _ X O X _ 
+	Current number: 1
+	Section 3 / 3: p = 8, q = 10, k' = 1
+		Fill up middle (2x-k') cells
+		_ O O O O _ X O X O 
+		Make false between true clusters.
+			Current number: 5
+		_ O O O O _ X O X O 
+			Current number: 1
+		_ O O O O _ X O X O 
+			Current number: 1
+		_ O O O O _ X O X O 
+		Make false around true cells.
+		_ O O O O _ X O X O 
+		p is false and p+1 is true
+		_ O O O O _ X O X O 
+		For section (8, 10):
+		_ O O O O _ X O X O 
+		Removing the last number in the array
+			Current number: 1
+		_ O O O O _ X O X O 
+		e = 7
+		Removing the last number in the array
+			Current number: 1
+		_ O O O O _ X O X O 
+		e = 5
+	After removing ends:
+	b = 0, e = 5, ke = 6
+Array [3, 1] -> [3, 1]:
+	Beginning of the array:
+	b = 0, e = 7, ke = 8
+	O O O X X X X O X X 
+	Solution is found for the array; sum of numbers == number of True
+	O O O X X X X O X X 
+Array [10] is solved.
+Array [10] is solved.
+Array [1] -> [1]:
+	Beginning of the array:
+	b = 0, e = 7, ke = 8
+	_ X X X X X X O X X 
+	Solution is found for the array; sum of numbers == number of True
+	X X X X X X X O X X 
+		Updating Ends:
+	b = 7, e = 7, ke = 1
+Array [3] -> [3]:
+	Beginning of the array:
+	b = 6, e = 8, ke = 3
+	X X X X X X O O O X 
+	Solution is found for the array; sum of numbers and spaces == effective length of row/column.
+	Current number: 3
+	X X X X X X O O O X 
+Array [10] is solved.
+--------------------- Column - 2 ---------------------
+Array [4, 1]->[4]:
+	Beginning of the array:
+	b = 3, e = 6, ke = 4
+	X X X _ O O O X X O 
+	Solution is found for the array; sum of numbers and spaces == effective length of row/column.
+	Current number: 4
+	X X X O O O O X X O 
+Array [4, 1] is solved.
+Array [4, 1] is solved.
+Array [2, 2, 1] is solved.
+Array [2, 2, 1] is solved.
+Array [2, 2, 1]->[2]:
+	Beginning of the array:
+	b = 1, e = 3, ke = 3
+	X _ O _ X O O X X O 
+		Fill up by general rules...
+			Current number: 2
+		X _ O _ X O O X X O 
+		There is only one number in the array.
+	Current number: 2
+	Section 1 / 1: p = 0, q = 4, k' = 3
+		Current True Cluster: from 2 to 2
+		Make false between true clusters.
+			Current number: 2
+			Current number: 2
+		X _ O _ X O O X X O 
+		Fill up middle (2x-k') cells
+		X _ O _ X O O X X O 
+		Make false between true clusters.
+			Current number: 2
+			Current number: 2
+		X _ O _ X O O X X O 
+		For section (0, 4):
+		X _ O _ X O O X X O 
+Array [2, 2, 2]->[2]:
+	Beginning of the array:
+	b = 0, e = 1, ke = 2
+	_ O X X X O O X O O 
+	Solution is found for the array; sum of numbers and spaces == effective length of row/column.
+	Current number: 2
+	O O X X X O O X O O 
+Array [10] is solved.
+Array [2, 2, 2]->[2]:
+	Beginning of the array:
+	b = 0, e = 2, ke = 3
+	_ O O X X O O X O O 
+	Solution is found for the array; sum of numbers == number of True
+	X O O X X O O X O O 
+		Updating Ends:
+	b = 1, e = 2, ke = 2
+Array [2, 2, 1]->[2]:
+	Beginning of the array:
+	b = 1, e = 3, ke = 3
+	X _ O O X O O X X O 
+	Solution is found for the array; sum of numbers == number of True
+	X X O O X O O X X O 
+		Updating Ends:
+	b = 2, e = 3, ke = 2
+=======================================================
+			Loop 3
+=======================================================
+----------------------- Row - 3 -----------------------
+Array [2] -> [2]:
+	Beginning of the array:
+	b = 6, e = 7, ke = 2
+	X X X X X X O O X X 
+	Solution is found for the array; sum of numbers and spaces == effective length of row/column.
+	Current number: 2
+	X X X X X X O O X X 
+Array [4] -> [4]:
+	Beginning of the array:
+	b = 5, e = 8, ke = 4
+	X X X X X _ O O O X 
+	Solution is found for the array; sum of numbers and spaces == effective length of row/column.
+	Current number: 4
+	X X X X X O O O O X 
+Array [3, 3] is solved.
+Array [5, 1, 1] -> [5]:
+	Beginning of the array:
+	b = 0, e = 5, ke = 6
+	O O O O O _ X O X O 
+	Solution is found for the array; sum of numbers == number of True
+	O O O O O X X O X O 
+		Updating Ends:
+	b = 0, e = 4, ke = 5
+Array [3, 1] is solved.
+Array [10] is solved.
+Array [10] is solved.
+Array [1] is solved.
+Array [3] is solved.
+Array [10] is solved.
+--------------------- Column - 3 ---------------------
+Array [4, 1] is solved.
+Array [4, 1] is solved.
+Array [4, 1] is solved.
+Array [2, 2, 1] is solved.
+Array [2, 2, 1] is solved.
+Array [2, 2, 1]->[2]:
+	Beginning of the array:
+	b = 1, e = 2, ke = 2
+	X O O X X O O X X O 
+	Solution is found for the array; sum of numbers and spaces == effective length of row/column.
+	Current number: 2
+	X O O X X O O X X O 
+Array [2, 2, 2] is solved.
+Array [10] is solved.
+Array [2, 2, 2] is solved.
+Array [2, 2, 1] is solved.
+Is the answer to the puzzle correct?: true
